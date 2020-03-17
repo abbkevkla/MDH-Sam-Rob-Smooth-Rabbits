@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 SoftwareSerial ESPserial(13, 15); //RX (D7), TX(D8)  
 
-byte Pwm_b = 5; 
-byte Dir_b1 = 0;
+byte Pwm_b = 5; //D1
+byte Dir_b1 = 0; //D3
 float propfault;
 String content;
 float fault;
@@ -38,17 +38,18 @@ void loop() {
   if (content != "") {
     //Serial.println(content);
     fault = content.toInt();
-    //fault = float(fault);
   }
-  
+
+  //Reglering för styrningen
   if (fault > 0) {
-    propfault = fault /160;
+    propfault = fault / 160;
     turnrate = 110 + (70 * propfault);
   }
-  else { 
+  else if (fault < 0){ 
     propfault = fault / 160;
     turnrate = 70 + (70 * propfault);
   }
+  
   raiseservo.write(180);
   turnservo.write(turnrate);
   Serial.print("Propfault: ");
