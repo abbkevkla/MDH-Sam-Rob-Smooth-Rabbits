@@ -12,9 +12,9 @@ uart_A = UART(UART.UART1, 115200,8,None,1, timeout=1000, read_buf_len=4096)
 
 write_str = 'lmao xd yeet'
 
-
-data = uart_A.write(write_str)
-print("sent this: " + str(data))
+while True:
+    data = uart_A.write(write_str)
+    print("sent this: " + str(data))
 
 
 
