@@ -1,6 +1,6 @@
 # Untitled - By: s8kevkla - Tue Jan 7 2020
 
-THRESHOLD = (0, 190)
+THRESHOLD = (0, 250)
 BINARY_VISIBLE = True
 
 
@@ -45,31 +45,39 @@ while(True):
     bw_img = img.copy().to_grayscale()
     bw_img.binary([THRESHOLD],invert=True) if BINARY_VISIBLE else sensor.snapshot()
 
-    crossing = bw_img.find_blobs([(120,256)])
+    crossing = bw_img.find_blobs([(120,256)], roi = (106, 0, 106, 240))
+    for c in crossing:
+        print(c[7]*(180/3.14))
 
     bw_img.clear()
 
     if crossing:
         #print(crossing)
         for b in crossing:
+            print(b[2]*b[3])
             if b[2]/b[3] > 3 or b[2]/b[3] < 0.69:
                 #print(b[2]*b[3])
                 #if b[2]*b[3] > 300:
-                tmp=bw_img.draw_rectangle(b[0:4], color = (255), fill = True)
+                tmp=bw_img.draw_rectangle(b[0:4], color = (255), fill = False)
+            elif b[7] < 70 or b[7] > 110:
+                if b[2]*b[3] > 1000:
+                    tmp=bw_img.draw_rectangle(b[0:4], color = (255), fill = False)
 
     #bw_img.mean(1).binary([(0,1)], invert = True)
     crossing2 = bw_img.find_blobs([(120,256)], merge = True, margin = 15)
 
-    lcd.display(bw_img)
+    #lcd.display(bw_img)
 
     bw_img.clear()
 
     if crossing2:
         for b in crossing2:
             #print(b[2]*b[3])
-            if b[2]*b[3] > 2501:
+            #if b[9] > 4:
+            if b[2]*b[3] > 2500:
                 crossings.append(b)
                 tmp=img.draw_rectangle(b[0:4], color = (255, 136, 0))
+                #tmp=bw_img.draw_rectangle(b[0:4], color = (255), thickness = 5)
             else:
                 tmp=img.draw_rectangle(b[0:4], color = (0, 136, 255))
                 lines.append(b)
@@ -77,7 +85,7 @@ while(True):
 
     # cross_line()
 
-    linei = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD],area_threshold=300,robust=True)
+    linei = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD], roi = (106, 0, 106, 240), area_threshold=300, robust = True)
 
     if linei:
         #print(linei)
@@ -85,7 +93,9 @@ while(True):
        img.draw_line((linei[0], 0, 159, 239), color = (219, 49, 245), thickness = 5)
        fault = linei[0] - 159
        uart_A.write(str(fault))
-       print(fault)
+       #print(fault)
+
+    lcd.display(img)
 
     #if len(crossings) > 2:
     #    print("4-vägskorsning")
