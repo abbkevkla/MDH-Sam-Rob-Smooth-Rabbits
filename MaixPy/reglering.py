@@ -1,6 +1,6 @@
 # Untitled - By: s8kevkla - Tue Jan 7 2020
 
-THRESHOLD = (0, 250)
+THRESHOLD = (0,190)
 BINARY_VISIBLE = True
 
 
@@ -45,69 +45,72 @@ while(True):
     bw_img = img.copy().to_grayscale()
     bw_img.binary([THRESHOLD],invert=True) if BINARY_VISIBLE else sensor.snapshot()
 
-    crossing = bw_img.find_blobs([(120,256)], roi = (106, 0, 106, 240))
-    for c in crossing:
-        print(c[7]*(180/3.14))
-
+    blobs = bw_img.find_blobs([(120,256)])
     bw_img.clear()
 
-    if crossing:
-        #print(crossing)
-        for b in crossing:
-            print(b[2]*b[3])
+    if blobs:
+        #print(blobs)
+        for b in blobs:
+            #print(b[2]*b[3])
             if b[2]/b[3] > 3 or b[2]/b[3] < 0.69:
-                #print(b[2]*b[3])
-                #if b[2]*b[3] > 300:
-                tmp=bw_img.draw_rectangle(b[0:4], color = (255), fill = False)
+                tmp = bw_img.draw_rectangle(b[0:4], color = (255), fill = False)
             elif b[7] < 70 or b[7] > 110:
                 if b[2]*b[3] > 1000:
-                    tmp=bw_img.draw_rectangle(b[0:4], color = (255), fill = False)
+                    tmp = bw_img.draw_rectangle(b[0:4], color = (255), fill = False)
 
-    #bw_img.mean(1).binary([(0,1)], invert = True)
-    crossing2 = bw_img.find_blobs([(120,256)], merge = True, margin = 15)
+    merged_blobs = bw_img.find_blobs([(120,256)], merge = True, margin = 15)
 
-    #lcd.display(bw_img)
+    lcd.display(bw_img)
 
     bw_img.clear()
 
-    if crossing2:
-        for b in crossing2:
-            #print(b[2]*b[3])
-            #if b[9] > 4:
-            if b[2]*b[3] > 2500:
+    if merged_blobs:
+        for b in merged_blobs:
+            if b.area() > 2000 and b.count() > 1:
                 crossings.append(b)
                 tmp=img.draw_rectangle(b[0:4], color = (255, 136, 0))
                 #tmp=bw_img.draw_rectangle(b[0:4], color = (255), thickness = 5)
-            else:
+            elif b.area() > 150:
                 tmp=img.draw_rectangle(b[0:4], color = (0, 136, 255))
                 lines.append(b)
                 tmp=bw_img.draw_rectangle(b[0:4], color = (255))
 
     # cross_line()
 
-    linei = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD], roi = (106, 0, 106, 240), area_threshold=300, robust = True)
+    center_line = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD], roi = (106, 0, 106, 240), area_threshold=300, robust = True)
+    checking_line = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD], area_threshold=300, robust = True)
 
-    if linei:
-        #print(linei)
-       img.draw_line(linei.line(), color = (120, 255, 3), thickness = 5)
-       img.draw_line((linei[0], 0, 159, 239), color = (219, 49, 245), thickness = 5)
-       fault = linei[0] - 159
+    if center_line:
+        #print(center_line)
+       img.draw_line(center_line.line(), color = (120, 255, 3), thickness = 5)
+       img.draw_line((center_line[0], 0, 159, 239), color = (219, 49, 245), thickness = 5)
+       img.draw_line(checking_line.line(), color = (255, 255, 0), thickness = 5)
+       fault = center_line[0] - 159
        uart_A.write(str(fault))
        #print(fault)
 
-    lcd.display(img)
 
-    #if len(crossings) > 2:
-    #    print("4-vägskorsning")
-    #    for c in crossings:
-    #        if c[2]/c[3] > 1:
-    #            pass
-    #elif len(crossings) == 1:
-    #    print("T-korsning")
-    #elif len(lines) > 3:
-    #    print("Raksträcka")
-    #else:
-    #    print("sväng")
-    #print(blank.compress_for_ide(), end="")
-    #lcd.display(bw_img)
+    if len(crossings) > 1:
+        print("4-vägskorsning")
+    elif len(crossings) == 1:
+        if crossings[0][5] < 106:
+            print("T-korsning <--")
+        elif crossings[0][5] > 212:
+            print("T-korsning -->")
+        elif crossings[0][6] < 80:
+            print("T-korsning ^")
+        elif crossings[0][6] > 160:
+            print("T-korsning v")
+        else:
+            print("whack")
+    #elif abs(fault) > 32:
+        #print("Sväng")
+    elif len(lines) > 2:
+        print(checking_line.theta())
+        if checking_line.theta() > 45 and checking_line.theta() < 135:
+            print("Raksträcka ---")
+        else:
+            print("Raksträcka |")
+    else:
+        print("Nuthin'")
     #print(clock.fps())
