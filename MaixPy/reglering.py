@@ -1,6 +1,6 @@
 # Untitled - By: s8kevkla - Tue Jan 7 2020
 
-THRESHOLD = (0,190)
+THRESHOLD = (0,230)
 BINARY_VISIBLE = True
 
 
@@ -44,7 +44,7 @@ while(True):
     #blank = img.copy().clear()
     bw_img = img.copy().to_grayscale()
     bw_img.binary([THRESHOLD],invert=True) if BINARY_VISIBLE else sensor.snapshot()
-
+    lcd.display(bw_img)
     blobs = bw_img.find_blobs([(120,256)])
     bw_img.clear()
 
@@ -60,13 +60,13 @@ while(True):
 
     merged_blobs = bw_img.find_blobs([(120,256)], merge = True, margin = 15)
 
-    lcd.display(bw_img)
+
 
     bw_img.clear()
 
     if merged_blobs:
         for b in merged_blobs:
-            if b.area() > 2000 and b.count() > 1:
+            if b.area() > 2000 and b.count() > 2:
                 crossings.append(b)
                 tmp=img.draw_rectangle(b[0:4], color = (255, 136, 0))
                 #tmp=bw_img.draw_rectangle(b[0:4], color = (255), thickness = 5)
@@ -87,6 +87,7 @@ while(True):
        img.draw_line(checking_line.line(), color = (255, 255, 0), thickness = 5)
        fault = center_line[0] - 159
        uart_A.write(str(fault))
+       print(checking_line.theta())
        #print(fault)
 
 
@@ -103,11 +104,18 @@ while(True):
             print("T-korsning v")
         else:
             print("whack")
-    #elif abs(fault) > 32:
-        #print("Sväng")
     elif len(lines) > 2:
-        print(checking_line.theta())
-        if checking_line.theta() > 45 and checking_line.theta() < 135:
+        if checking_line.theta() > 20 and checking_line.theta() < 70:
+            if checking_line[1] > 200 or checking_line[3] > 200:
+                print("Sväng ^>")
+            else:
+                print("Sväng <v")
+        elif checking_line.theta() > 110 and checking_line.theta() < 160:
+            if checking_line[1] > 200 or checking_line[3] > 200:
+                print("Sväng <^")
+            else:
+                print("Sväng v>")
+        elif checking_line.theta() > 45 and checking_line.theta() < 135:
             print("Raksträcka ---")
         else:
             print("Raksträcka |")
