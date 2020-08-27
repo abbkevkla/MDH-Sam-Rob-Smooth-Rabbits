@@ -1,11 +1,5 @@
 # Untitled - By: s8kevkla - Tue Jan 7 2020
-
-THRESHOLD = (0,230)
-BINARY_VISIBLE = True
-
-
 import sensor, image, time, lcd
-
 from fpioa_manager import fm
 from machine import UART
 from board import board_info
@@ -17,6 +11,8 @@ fm.register(board_info.PIN15, fm.fpioa.UART1_TX, force=True) # Sets pin15 as new
 
 uart_A = UART(UART.UART1, 115200,8,None,1, timeout=1000, read_buf_len=4096)
 
+THRESHOLD = (0,230)
+
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
@@ -25,25 +21,14 @@ sensor.set_hmirror(0)
 clock = time.clock()
 lcd.init()
 
-def cross_line():
-    run = True
-    print(len(crossings))
-    for b in crossings:
-        if run == True:
-            if b[2]/b[3] > 1:
-                mid = b[0] + (b[2]/2)
-                img.draw_line((int(mid), 0, 159, 239), color = (219, 49, 245), thickness = 5)
-                run = False
-
 
 while(True):
     lines = []
     crossings = []
     clock.tick()
     img = sensor.snapshot()
-    #blank = img.copy().clear()
     bw_img = img.copy().to_grayscale()
-    bw_img.binary([THRESHOLD],invert=True) if BINARY_VISIBLE else sensor.snapshot()
+    bw_img.binary([THRESHOLD],invert=True)
     lcd.display(bw_img)
     blobs = bw_img.find_blobs([(120,256)])
     bw_img.clear()
@@ -60,8 +45,6 @@ while(True):
 
     merged_blobs = bw_img.find_blobs([(120,256)], merge = True, margin = 15)
 
-
-
     bw_img.clear()
 
     if merged_blobs:
@@ -75,10 +58,10 @@ while(True):
                 lines.append(b)
                 tmp=bw_img.draw_rectangle(b[0:4], color = (255))
 
-    # cross_line()
 
-    center_line = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD], roi = (106, 0, 106, 240), area_threshold=300, robust = True)
-    checking_line = bw_img.get_regression([(100,256) if BINARY_VISIBLE else THRESHOLD], area_threshold=300, robust = True)
+
+    center_line = bw_img.get_regression([(100,256)], roi = (106, 0, 106, 240), area_threshold=300, robust = True)
+    checking_line = bw_img.get_regression([(100,256)], area_threshold=300, robust = True)
 
     if center_line:
         #print(center_line)
