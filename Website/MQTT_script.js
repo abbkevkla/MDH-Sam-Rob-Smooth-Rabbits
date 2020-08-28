@@ -2,7 +2,7 @@ function startConnect() {
     clientID = document.getElementById("ID").value;
 
     // Fetch the hostname/IP address and port number from the form
-    host =document.getElementById("host").value;
+    host = document.getElementById("host").value;
     port = document.getElementById("port").value;
 
     // Print output for the user in the messages div
