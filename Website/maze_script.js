@@ -1,7 +1,7 @@
 const canvas = document.getElementById("myCanvas");
 const context = canvas.getContext("2d");
 
-context.fillStyle = "red";
+context.fillStyle = "purple";
 context.fillRect(0, 0, 420, 420);
 context.fill();
 
