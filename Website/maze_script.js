@@ -1,6 +1,6 @@
 const canvas = document.getElementById("myCanvas");
 const context = canvas.getContext("2d");
-import {test_msg, transformer} from "./transformer.js"; // To use modules, website needs to be hosted on a webserver. I use localhost through the "live server" VSCode extension.
+import {test_msg, transformer, draw_tiles} from "./transformer.js"; // To use modules, website needs to be hosted on a webserver. I use localhost through the "live server" VSCode extension.
 test_msg();
 console.log(transformer([
     [0, 0, 0],
@@ -97,23 +97,17 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
         }
     }
     console.log(maze);
-    console.log(current_pos);
-    context.beginPath();
-    context.fillStyle = "yellow";
-    context.strokeStyle = "black";
-    context.lineWidth = "3";
-    context.rect(current_pos[0] * tile_w, current_pos[1] * tile_h, tile_w, tile_h);
-    context.fillRect(current_pos[0] * tile_w, current_pos[1] * tile_h, tile_w, tile_h);
-    context.fill();
-    context.stroke();
+    // console.log(current_pos);
+    draw_tiles(maze, relative_pos[0], relative_pos[1], tile_w, tile_h);
 }
 
 context.fillStyle = "purple";
 context.fillRect(0, 0, 420, 420);
 context.fill();
+context.closePath();
 
 let maze = [
-    ["x"]
+    [0]
 ];
 let relative_pos = [0, 0];
 let current_pos = [0, 0];

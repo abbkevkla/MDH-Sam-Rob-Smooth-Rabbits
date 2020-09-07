@@ -1,3 +1,6 @@
+const canvas = document.getElementById("myCanvas");
+const context = canvas.getContext("2d");
+
 function test_msg() {
     console.log("Module is connected");
 }
@@ -32,4 +35,27 @@ function transformer(matrix) { // Turns a matrix of 1*1 tiles into a matrix with
     return(new_matrix);
 }
 
-export {test_msg, transformer}; // Things to export from this module 
+function draw_tiles(map, x, y, tile_width, tile_height) {
+    let new_width = tile_width/3;
+    let new_height = tile_height/3;
+    let dist_x = x * tile_width;
+    let dist_y = y * tile_height;
+    for (let r = 0; r < 3; r++) { 
+        for (let c = 0; c < 3; c++) {
+            context.beginPath();
+            if (r == 1) {
+                context.fillStyle = "white";
+            }
+            else {
+                context.fillStyle = "black";
+            }
+            context.fillRect(dist_x, dist_y, new_width, new_height); 
+            context.fill();
+            dist_x = dist_x + new_width;
+        }
+        dist_x = x * tile_width;       
+        dist_y = dist_y + new_height; 
+    }
+}
+
+export {test_msg, transformer, draw_tiles}; // Things to export from this module 
