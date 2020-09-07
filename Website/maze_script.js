@@ -1,5 +1,11 @@
 const canvas = document.getElementById("myCanvas");
 const context = canvas.getContext("2d");
+import {test_msg, transformer} from "./transformer.js"; // To use modules, website needs to be hosted on a webserver. I use localhost through the "live server" VSCode extension.
+test_msg();
+console.log(transformer([
+    [0, 0, 0],
+    [0, 0, 0]
+]));
 
 document.onkeydown = checkKey; // Watching for keypresses, if one is pressed, run checkKey()
 function checkKey(e) { // e is the event, containing all the data of the keypress
@@ -13,7 +19,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             if (typeof maze[relative_pos[1]] == "undefined") {
                 current_height = current_height + 1;
                 let new_row = [];
-                for (i = 0; i < current_width; i++) {
+                for (let i = 0; i < current_width; i++) {
                     new_row.push(0);
                 }
                 new_row[relative_pos[0]] = steps;
@@ -36,7 +42,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             if (typeof maze[relative_pos[1] - 1] == "undefined") {
                 current_height = current_height + 1;
                 let new_row = [];
-                for (i = 0; i < current_width; i++) {
+                for (let i = 0; i < current_width; i++) {
                     new_row.push(0);
                 }
                 new_row[relative_pos[0]] = steps;
@@ -58,7 +64,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             steps = steps + 1;
             if (typeof maze[relative_pos[1]][relative_pos[0] - 1] == "undefined") {
                 current_width = current_width + 1;
-                for (i = 0; i < current_height; i++) {
+                for (let i = 0; i < current_height; i++) {
                     maze[i].unshift(0);
                 }
                 maze[relative_pos[1]][0] = steps;
@@ -80,7 +86,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             relative_pos[0] = relative_pos[0] + 1;
             if (typeof maze[relative_pos[1]][relative_pos[0]] == "undefined") {
                 current_width = current_width + 1;
-                for (i = 0; i < current_height; i++) {
+                for (let i = 0; i < current_height; i++) {
                     maze[i].push(0);
                 }
             } 
@@ -122,8 +128,8 @@ let dist_y = 0;
 let tile_w = canvas.width/size_x; // Tilesize adapts to fit the given canvas
 let tile_h = canvas.height/size_y;
 
-for (r = 0; r < size_x; r++) { 
-    for (c = 0; c < size_y; c++) {
+for (let r = 0; r < size_x; r++) { 
+    for (let c = 0; c < size_y; c++) {
         context.beginPath();
         context.strokeStyle = "black";
         context.lineWidth = "3";
@@ -134,4 +140,3 @@ for (r = 0; r < size_x; r++) {
     dist_x = 0;
     dist_y = dist_y + tile_h; 
 }
-dist_y = 0;
