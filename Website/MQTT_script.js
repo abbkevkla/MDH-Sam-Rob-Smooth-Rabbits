@@ -31,6 +31,7 @@ function onConnect() {
     console.log(newtopic);
     // Print output for the user in the messages div
     document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + newtopic + '</span><br/>';
+    document.getElementById("status").innerHTML = "connected";
 
     // Subscribe to the requested topic
     client.subscribe(newtopic);
@@ -60,6 +61,7 @@ function onConnectionLost(responseObject) {
 function onMessageArrived(message) {
     console.log("onMessageArrived: " + message.payloadString);
     document.getElementById("messages").innerHTML += '<span>Topic: ' + message.destinationName + '  | ' + message.payloadString + '</span><br/>';
+    document.getElementById("latest_msg").value = message.payloadString;
 }
 
 // Called when the disconnection button is pressed
@@ -67,3 +69,4 @@ function startDisconnect() {
     client.disconnect();
     document.getElementById("messages").innerHTML += '<span>Disconnected</span><br/>';
 }
+

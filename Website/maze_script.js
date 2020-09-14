@@ -1,15 +1,18 @@
 const canvas = document.getElementById("myCanvas");
 const context = canvas.getContext("2d");
 import {test_msg, transformer, draw_tiles} from "./transformer.js"; // To use modules, website needs to be hosted on a webserver. I use localhost through the "live server" VSCode extension.
+
 test_msg();
 console.log(transformer([
     [0, 0, 0],
     [0, 0, 0]
 ]));
 
-document.onkeydown = checkKey; // Watching for keypresses, if one is pressed, run checkKey()
-function checkKey(e) { // e is the event, containing all the data of the keypress
-    if (e.key == "ArrowDown") {
+
+function change_pos() { // e is the event, containing all the data of the keypress
+    let direction = document.getElementById("latest_msg").value;
+    console.log("ran change_pos(), got: " + direction);
+    if (direction == "down") {
         if (current_pos[1] < size_y - 1) {
             console.log("down");
             steps = steps + 1;
@@ -33,7 +36,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             console.log("can't go down");
         }
     }
-    else if (e.key == "ArrowUp") {
+    else if (direction == "up") {
         if (current_pos[1] > 0) {
             console.log("up");
             steps = steps + 1;
@@ -57,7 +60,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             console.log("can't go up");
         }
     }
-    else if (e.key == "ArrowLeft") {
+    else if (direction == "left") {
         if (current_pos[0] > 0) {
             console.log("left");
             current_pos[0] = current_pos[0] - 1;
@@ -78,7 +81,7 @@ function checkKey(e) { // e is the event, containing all the data of the keypres
             console.log("can't go left");
         }
     }
-    else if (e.key == "ArrowRight") {
+    else if (direction == "right") {
         if (current_pos[0] < size_x - 1) {
             console.log("right");
             steps = steps + 1;
@@ -133,4 +136,8 @@ for (let r = 0; r < size_x; r++) {
     }
     dist_x = 0;
     dist_y = dist_y + tile_h; 
+}
+
+while (document.getElementById("status").innerHTML == "connected") {
+
 }
