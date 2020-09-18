@@ -23,7 +23,7 @@ class PriorityQueue {
         // item array to add element at the 
         // correct location of the Queue 
         for (var i = 0; i < this.items.length; i++) { 
-            if (this.items[i].priority < qElement.priority) { 
+            if (this.items[i].priority > qElement.priority) { 
                 // Once the correct location is found it is 
                 // enqueued 
                 this.items.splice(i, 0, qElement); 
@@ -66,7 +66,7 @@ function findActions(position, map, max_row, max_col) { // Used to find neighbou
             } 
         }
     }
-    return 0;
+    return "n/a";
 }
 
 function CreateBoard(map) { // Converts a regular 2d matrix into a dict where each tile has a list of available actions
@@ -77,7 +77,7 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
             let actions = [];
             for (neighbour of [[r + 1, c], [r, c + 1], [r - 1, c], [r, c - 1]]) { // Up, right, down, left
                 let action = findActions(neighbour, map, map[0].length - 1, map.length - 1)
-                if (action != 0) {
+                if (action != "n/a") {
                     actions.push(action);
                 }
             mazeDict[position] = {state: map[c][r], actions: actions};
@@ -97,7 +97,7 @@ function UniformCostSearch(startPos, map, goalPos) {
         let currentState = values.element[0];
         let actions = values.element[1];
         let currentCost = values.element[2];
-        if (currentState in exploredNodes != true || currentCost < exploredNodes[currentState]) {
+        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) {
             exploredNodes[currentState] = currentCost;
             if (currentState == goalPos) {
                 console.log(startPos, "to", goalPos ,actions, currentCost);
@@ -118,11 +118,11 @@ function UniformCostSearch(startPos, map, goalPos) {
 
 
     let map = [
-        [1, 0, 0, 0, 0],
-        [1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 0],
-        [1, 0, 0, 1, 0],
-        [1, 1, 1, 1, 1]
+        [1, 1, 1, 1, 1],
+        [5, 5, 5, 4, 2],
+        [1, 98, 1, 1, 1],
+        [1, 5, 1, 8, 7],
+        [1, 13, 1, 1, 1]
         ];
 
 console.log(findActions([4, 4], map, 4, 4))
