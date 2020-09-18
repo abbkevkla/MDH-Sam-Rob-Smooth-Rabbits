@@ -76,7 +76,7 @@ let tile_h = canvas.height/size_y;
 context.fillStyle = "DarkViolet";
 context.fillRect(0, 0, canvas.width, canvas.height);
 context.fillStyle = "Chartreuse";
-context.fillRect(current_pos[0]*tile_w, current_pos[1]*tile_h, tile_w, tile_h); 
+context.fillRect(current_pos[0] * tile_w, current_pos[1] * tile_h, tile_w, tile_h); 
 context.closePath();
 
 for (let r = 0; r < size_x; r++) { 
@@ -118,8 +118,8 @@ for (let r = 0; r < size_x; r++) {
 //     return(new_matrix);
 // }
 
-function draw_tiles(x, y, tile_width, tile_height, tile) {
-    let new_width = tile_width/3;
+function draw_tiles(x, y, tile_width, tile_height, tile) { // Takes a tile with a single value and turns it into a 3*3 tile that resembles the actual road
+    let new_width = tile_width/3; // Divides the width and height by 3 to create a 3*3 tile, since that is how the more detailed tiles look
     let new_height = tile_height/3;
     let dist_x = x * tile_width;
     let dist_y = y * tile_height;
@@ -141,7 +141,7 @@ function draw_tiles(x, y, tile_width, tile_height, tile) {
     }
 }
 
-function change_pos(direction, tiletype) { // e is the event, containing all the data of the keypress
+function change_pos(direction, tiletype) { // Changes the current position in the maze
     console.log("ran change_pos(), got: " + direction + " tile: " + tiletype);
     let activetile = tiletypes[tiletype];
     console.log(activetile);
@@ -233,10 +233,9 @@ function change_pos(direction, tiletype) { // e is the event, containing all the
     draw_tiles(relative_pos[0], relative_pos[1], tile_w, tile_h, activetile);
 }
 
-function startConnect() {
-    clientID = document.getElementById("ID").value;
-
+function startConnect() { // When the connect-button is pressed
     // Fetch the hostname/IP address and port number from the form
+    clientID = document.getElementById("ID").value;
     host = document.getElementById("host").value;
     port = document.getElementById("port").value;
 
@@ -256,11 +255,11 @@ function startConnect() {
 }
 function onFail() {
     document.getElementById("messages").innerHTML += '<span>ERROR: Connection to: ' + host + ' on port: ' + port + ' failed.</span><br/>'
-
 }  
+
 let topic="kevin.klarin@abbindustrigymnasium.se/";
-// Called when the client connects
-function onConnect() {
+
+function onConnect() { // Called when the client connects
     // Fetch the MQTT topic from the form
     newtopic = topic + document.getElementById("topic").value;
     console.log(newtopic);
@@ -268,7 +267,7 @@ function onConnect() {
     document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + newtopic + '</span><br/>';
     document.getElementById("status").innerHTML = "connected";
 
-    message= new Paho.MQTT.Message("Connected from webpage");
+    message = new Paho.MQTT.Message("Connected from webpage"); //Sends message to broker
     message.destinationName = newtopic;
     client.send(message);
 
@@ -278,31 +277,27 @@ function onConnect() {
 function onSend() {
     // Fetch the MQTT topic from the form
     // Print output for the user in the messages div'
-    //let message = "Dont press that button";
     let message= document.getElementById("newMessage").value;
-    //console.log(message);
-      message= new Paho.MQTT.Message(message);
-      message.destinationName=newtopic;
+      message = new Paho.MQTT.Message(message);
+      message.destinationName = newtopic;
       client.send(message);
 }
-// Called when the client loses its connection
-function onConnectionLost(responseObject) {
+
+function onConnectionLost(responseObject) { // Called when the client loses its connection
     document.getElementById("messages").innerHTML += '<span>ERROR: Connection lost</span><br/>';
     if (responseObject.errorCode !== 0) {
         document.getElementById("messages").innerHTML += '<span>ERROR: ' + + responseObject.errorMessage + '</span><br/>';
     }
 }
 
-// Called when a message arrives
-function onMessageArrived(message) {
+function onMessageArrived(message) { // Called when a message arrives
     console.log("onMessageArrived: " + message.payloadString);
     document.getElementById("messages").innerHTML += '<span>Topic: ' + message.destinationName + '  | ' + message.payloadString + '</span><br/>';
     document.getElementById("latest_msg").value = message.payloadString;
     change_pos(message.payloadString.split(" ")[0], message.payloadString.split(" ")[1]);
 }
 
-// Called when the disconnection button is pressed
-function startDisconnect() {
+function startDisconnect() { // Called when the disconnect-button is pressed
     client.disconnect();
     document.getElementById("messages").innerHTML += '<span>Disconnected</span><br/>';
 }

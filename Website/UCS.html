@@ -1,67 +1,46 @@
 <!DOCTYPE html>
 <script>
 
-// PriorityQueue class 
-class PriorityQueue { 
-
-    // An array is used to implement priority 
+class PriorityQueue { // A type of list where items are sorted based on a priority value. Items with a low priority value are placed first in the list
     constructor() { 
-        this.items = []; 
+        this.items = []; // The main array
     } 
-    // enqueue function to add element 
-    // to the queue as per priority 
-    enqueue(element, priority) { 
-        // creating object from queue element 
+
+    enqueue(element, priority) { // enqueue is used to push new items into the list
         var qElement = {
             element: element, 
             priority: priority
         };
-        //var qElement = new QElement(element, priority); 
         var contain = false; 
     
-        // iterating through the entire 
-        // item array to add element at the 
-        // correct location of the Queue 
         for (var i = 0; i < this.items.length; i++) { 
             if (this.items[i].priority > qElement.priority) { 
-                // Once the correct location is found it is 
-                // enqueued 
                 this.items.splice(i, 0, qElement); 
                 contain = true; 
                 break; 
             } 
         } 
-        // if the element have the highest priority 
-        // it is added at the end of the queue 
-        if (!contain) { 
+        if (!contain) { // If the new items priority is the highest it is placed at the end of the list
             this.items.push(qElement); 
         } 
     } 
-    // dequeue method to remove 
-    // element from the queue 
-    dequeue() 
-        { 
-            // return the dequeued element 
-            // and remove it. 
-            // if the queue is empty 
-            // returns Underflow 
+
+    dequeue() { // Removes the first item in the list, a.k.a. the item with the lowesst priority, and returns it
             if (this.isEmpty()) 
-                return "Underflow"; 
+                return "No items to remove"; 
             return this.items.shift(); 
         } 
-    // isEmpty function 
-    isEmpty() 
-    { 
-        // return true if the queue is empty. 
+
+    isEmpty() { // return true if the queue is empty
         return this.items.length == 0; 
     } 
 }
 
-function findActions(position, map, max_row, max_col) { // Used to find neighbour tiles and their values
+function findActions(position, map, max_row, max_col) { // Used to check a tile for its value and then return it
     if (position[0] >= 0 && position[0] <= max_row) {
         if (position[1] >= 0 && position[1] <= max_col) {
             let value = map[position[0]][position[1]];
-            if (value != "x") {
+            if (value != "x") { // "x" indicates that the tile can not be used
                 return ["(" + String(position[0]) + ", " + String(position[1]) + ")", value]
             } 
         }
@@ -75,8 +54,8 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
         for (let c = 0; c < map[0].length; c++) { // For each column
             let position = "(" + String(r) + ", " + String(c) + ")";
             let actions = [];
-            for (neighbour of [[r + 1, c], [r, c + 1], [r - 1, c], [r, c - 1]]) { // Up, right, down, left
-                let action = findActions(neighbour, map, map[0].length - 1, map.length - 1)
+            for (neighbour of [[r + 1, c], [r, c + 1], [r - 1, c], [r, c - 1]]) { // For each neigbour to the current tile, those being up, right, down and left
+                let action = findActions(neighbour, map, map[0].length - 1, map.length - 1) 
                 if (action != "n/a") {
                     actions.push(action);
                 }
@@ -87,19 +66,19 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
     return mazeDict
 }
 
-function UniformCostSearch(startPos, map, goalPos) {
+function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possible path
     let frontier = new PriorityQueue();
     exploredNodes = {};
     let startNode = [startPos, [], 0];
     frontier.enqueue(startNode, 0);
     while (frontier.isEmpty != true) {
-        let values = frontier.dequeue()
+        let values = frontier.dequeue() // Removes and returns the item with lowest priority
         let currentState = values.element[0];
         let actions = values.element[1];
         let currentCost = values.element[2];
-        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) {
+        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
             exploredNodes[currentState] = currentCost;
-            if (currentState == goalPos) {
+            if (currentState == goalPos) { 
                 console.log(startPos, "to", goalPos ,actions, currentCost);
                 return actions
             }
@@ -109,7 +88,7 @@ function UniformCostSearch(startPos, map, goalPos) {
                     let newAction = actions + succ[0];
                     let newCost = currentCost + succ[1];
                     let newNode = [succ[0], newAction, newCost];
-                    frontier.enqueue(newNode, newCost);
+                    frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
                 }
             }
         }
@@ -120,14 +99,13 @@ function UniformCostSearch(startPos, map, goalPos) {
     let map = [
         [1, 1, 1, 1, 1],
         [5, 5, 5, 4, 2],
-        [1, 98, 1, 1, 1],
+        [1, 8, 1, 1, 1],
         [1, 5, 1, 8, 7],
-        [1, 13, 1, 1, 1]
+        [1, 9, 1, 1, 1]
         ];
 
 console.log(findActions([4, 4], map, 4, 4))
 let new_map = CreateBoard(map);
 console.log(new_map);
 UniformCostSearch("(0, 0)", new_map, "(4, 4)");
-
 </script>
