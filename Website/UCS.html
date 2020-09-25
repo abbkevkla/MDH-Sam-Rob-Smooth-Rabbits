@@ -69,25 +69,28 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
 function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possible path
     let frontier = new PriorityQueue();
     exploredNodes = {};
-    let startNode = [startPos, [], 0];
+    let startNode = [startPos, [], ["start"], 0]; // Startpos, actions, directions, cost
     frontier.enqueue(startNode, 0);
     while (frontier.isEmpty != true) {
         let values = frontier.dequeue() // Removes and returns the item with lowest priority
         let currentState = values.element[0];
         let actions = values.element[1];
-        let currentCost = values.element[2];
+        let directions = values.element[2] + ", ";
+        let currentCost = values.element[3];
         if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
             exploredNodes[currentState] = currentCost;
             if (currentState == goalPos) { 
                 console.log(startPos, "to", goalPos ,actions, currentCost);
-                return actions
+                console.log("Directions: " + directions);
+                return actions, directions
             }
             else {
                 let successors = map[currentState];
                 for (succ of successors["actions"]) {
                     let newAction = actions + succ[0];
                     let newCost = currentCost + succ[1];
-                    let newNode = [succ[0], newAction, newCost];
+                    let newDirection = directions + succ[2];
+                    let newNode = [succ[0], newAction, newDirection, newCost];
                     frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
                 }
             }
@@ -98,8 +101,8 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
 
     let map = [
         [1, 1, 1, 1, 1],
-        [5, 5, 5, 4, 2],
-        [1, 8, 1, 3, 1],
+        [5, 5, 9, 5, 2],
+        [1, 8, 1, 1, 1],
         [1, 5, 1, 8, 7],
         [1, 9, 1, 1, 1]
         ];
