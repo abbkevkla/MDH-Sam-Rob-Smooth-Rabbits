@@ -59,10 +59,9 @@ tiletypes = [ // 0 indicates road, 1 indicates terrain
     ]
 ]
 let maze = [
-    ["S"]
 ];
 let relative_pos = [0, 0];
-let current_pos = [0, 0];
+let current_pos = [2, 4];
 let current_width = 1;
 let current_height = 1;
 
@@ -80,7 +79,9 @@ context.fillRect(current_pos[0] * tile_w, current_pos[1] * tile_h, tile_w, tile_
 context.closePath();
 
 for (let r = 0; r < size_x; r++) { 
+    let maze_row = [];
     for (let c = 0; c < size_y; c++) {
+        maze_row.push("x");
         context.beginPath();
         context.strokeStyle = "black";
         context.lineWidth = "2";
@@ -88,35 +89,135 @@ for (let r = 0; r < size_x; r++) {
         context.stroke();
         dist_x = dist_x + tile_w;
     }
+    maze.push(maze_row);
     dist_x = 0;
     dist_y = dist_y + tile_h; 
 }
+maze[current_pos[1]][current_pos[0]] = "S";
+console.log(maze);
 
 
-// function transformer(matrix) { // Turns a matrix of 1*1 tiles into a matrix with 3*3 tiles
-//     let rows = matrix.length;
-//     let cols = matrix[0].length;
-//     let chunks = [];
-//     let new_matrix = []
-//     for (let r = 0; r < rows; r++) { // For each row
-//         chunks = [ // Pushes 3 new rows at a time to new_matrix
-//             [],
-//             [],
-//             []
-//         ];
-//         for (let c = 0; c < cols; c++) { // For each col
-//             for (let tile_row = 0; tile_row < 3; tile_row++) { // For each row and col in a tile. Tiles are always sized 3*3
-//                 for (let tile_col = 0; tile_col < 3; tile_col++) {
-//                     chunks[tile_row].push(tile[tile_row][tile_col]);
-//                 }
-//             }
-//         }
-//         for (let chunk of chunks) {
-//             new_matrix.push(chunk); // Push all chunks to new_matrix
-//         }
-//     }
-//     return(new_matrix);
-// }
+class PriorityQueue { // A type of list where items are sorted based on a priority value. Items with a low priority value are placed first in the list
+    constructor() { 
+        this.items = []; // The main array
+    } 
+
+    enqueue(element, priority) { // enqueue is used to push new items into the list
+        var qElement = {
+            element: element, 
+            priority: priority
+        };
+        var contain = false; 
+    
+        for (var i = 0; i < this.items.length; i++) { 
+            if (this.items[i].priority > qElement.priority) { 
+                this.items.splice(i, 0, qElement); 
+                contain = true; 
+                break; 
+            } 
+        } 
+        if (!contain) { // If the new items priority is the highest it is placed at the end of the list
+            this.items.push(qElement); 
+        } 
+    } 
+
+    dequeue() { // Removes the first item in the list, a.k.a. the item with the lowesst priority, and returns it
+            if (this.isEmpty()) 
+                return "No items to remove"; 
+            return this.items.shift(); 
+        } 
+
+    isEmpty() { // return true if the queue is empty
+        return this.items.length == 0; 
+    } 
+}
+
+function findActions(position, map, max_row, max_col, direction) { // Used to check a tile for its value and then return it
+    if (position[0] >= 0 && position[0] <= max_row) {
+        if (position[1] >= 0 && position[1] <= max_col) {
+            let value = map[position[0]][position[1]];
+            if (value != "x") { // "x" indicates that the tile can not be used
+                return ["(" + String(position[0]) + ", " + String(position[1]) + ")", value, direction]
+            } 
+        }
+    }
+    return "n/a";
+}
+
+function CreateBoard(map) { // Converts a regular 2d matrix into a dict where each tile has a list of available actions
+    let mazeDict = {};
+    for (let r = 0; r < map.length; r++) { // For each row
+        for (let c = 0; c < map[0].length; c++) { // For each column
+            let position = "(" + String(r) + ", " + String(c) + ")";
+            let actions = [];
+            for (neighbour of [[[r + 1, c], "south"], [[r, c + 1], "east"], [[r - 1, c], "north"], [[r, c - 1], "west"]]) { // For each neigbour to the current tile, those being down, right, up and left
+                let action = findActions(neighbour[0], map, map[0].length - 1, map.length - 1, neighbour[1]); 
+                if (action != "n/a") {
+                    actions.push(action);
+                }
+            mazeDict[position] = {state: map[c][r], actions: actions};
+            }
+        }
+    }
+    return mazeDict
+}
+
+function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possible path
+    let frontier = new PriorityQueue();
+    exploredNodes = {};
+    let startNode = [startPos, [], ["start"], 0]; // Startpos, actions, directions, cost
+    frontier.enqueue(startNode, 0);
+    while (frontier.isEmpty != true) {
+        let values = frontier.dequeue() // Removes and returns the item with lowest priority
+        let currentState = values.element[0];
+        let actions = values.element[1];
+        let directions = values.element[2] + ", ";
+        let currentCost = values.element[3];
+        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
+            exploredNodes[currentState] = currentCost;
+            if (currentState == goalPos) { 
+                console.log(startPos, "to", goalPos ,actions, currentCost);
+                console.log("Directions: " + directions);
+                return actions, directions
+            }
+            else {
+                let successors = map[currentState];
+                for (succ of successors["actions"]) {
+                    let newAction = actions + succ[0];
+                    let newCost = currentCost + succ[1];
+                    let newDirection = directions + succ[2];
+                    let newNode = [succ[0], newAction, newDirection, newCost];
+                    frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
+                }
+            }
+        }
+    }
+}
+
+function transformer(matrix) { // Turns a matrix of 1*1 tiles into a matrix with 3*3 tiles
+    let rows = matrix.length;
+    let cols = matrix[0].length;
+    let chunks = [];
+    let new_matrix = []
+    for (let r = 0; r < rows; r++) { // For each row
+        chunks = [ // Pushes 3 new rows at a time to new_matrix
+            [],
+            [],
+            []
+        ];
+        for (let c = 0; c < cols; c++) { // For each col
+            for (let tile_row = 0; tile_row < 3; tile_row++) { // For each row and col in a tile. Tiles are always sized 3*3
+                for (let tile_col = 0; tile_col < 3; tile_col++) {
+                    chunks[tile_row].push(tile[tile_row][tile_col]);
+                }
+            }
+        }
+        for (let chunk of chunks) {
+            new_matrix.push(chunk); // Push all chunks to new_matrix
+        }
+    }
+    return(new_matrix);
+}
 
 function draw_tiles(x, y, tile_width, tile_height, tile) { // Takes a tile with a single value and turns it into a 3*3 tile that resembles the actual road
     let new_width = tile_width/3; // Divides the width and height by 3 to create a 3*3 tile, since that is how the more detailed tiles look
@@ -150,19 +251,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             console.log("down");
             current_pos[1] = current_pos[1] + 1;
             relative_pos[1] = relative_pos[1] + 1;
-
-            if (typeof maze[relative_pos[1]] == "undefined") {
-                current_height = current_height + 1;
-                let new_row = [];
-                for (let i = 0; i < current_width; i++) {
-                    new_row.push("x");
-                }
-                new_row[relative_pos[0]] = tiletype;
-                maze.push(new_row);   
-            } 
-            else {
-                maze[relative_pos[1]][relative_pos[0]] = tiletype;
-            } 
         } 
         else {
             console.log("can't go down");
@@ -172,20 +260,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         if (current_pos[1] > 0) {
             console.log("up");
             current_pos[1] = current_pos[1] - 1;
-
-            if (typeof maze[relative_pos[1] - 1] == "undefined") {
-                current_height = current_height + 1;
-                let new_row = [];
-                for (let i = 0; i < current_width; i++) {
-                    new_row.push("x");
-                }
-                new_row[relative_pos[0]] = tiletype;
-                maze.unshift(new_row);   
-            } 
-            else {
-                relative_pos[1] = relative_pos[1] - 1;
-                maze[relative_pos[1]][relative_pos[0]] = tiletype;
-            } 
         } 
         else {
             console.log("can't go up");
@@ -195,17 +269,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         if (current_pos[0] > 0) {
             console.log("left");
             current_pos[0] = current_pos[0] - 1;
-            if (typeof maze[relative_pos[1]][relative_pos[0] - 1] == "undefined") {
-                current_width = current_width + 1;
-                for (let i = 0; i < current_height; i++) {
-                    maze[i].unshift("x");
-                }
-                maze[relative_pos[1]][0] = tiletype;
-            }
-            else {
-                relative_pos[0] = relative_pos[0] - 1;
-                maze[relative_pos[1]][relative_pos[0]] = tiletype;
-            }
         }
         else {
             console.log("can't go left");
@@ -216,13 +279,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             console.log("right");
             current_pos[0] = current_pos[0] + 1; 
             relative_pos[0] = relative_pos[0] + 1;
-            if (typeof maze[relative_pos[1]][relative_pos[0]] == "undefined") {
-                current_width = current_width + 1;
-                for (let i = 0; i < current_height; i++) {
-                    maze[i].push("x");
-                }
-            } 
-            maze[relative_pos[1]][relative_pos[0]] = tiletype;
         }
         else {
             console.log("can't go right");
@@ -231,6 +287,11 @@ function change_pos(direction, tiletype) { // Changes the current position in th
     console.log(maze);
     // console.log(current_pos);
     draw_tiles(relative_pos[0], relative_pos[1], tile_w, tile_h, activetile);
+}
+
+function FindPath() {
+    let goalpos = document.getElementById("goalpos").value;
+    console.log(goalpos);
 }
 
 function startConnect() { // When the connect-button is pressed

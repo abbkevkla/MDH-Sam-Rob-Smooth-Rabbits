@@ -23,13 +23,14 @@
                    <b>Port:</b>
                    <input id="port" type="text" name="port" value="8883"><br>
                    <b>Topic:</b>
-                   <input id="topic" type="text" name="topic" value="lmaoxd"><br>
-                   <b id="status">Latest message:</b>
-                   <input id="latest_msg" type="text" name="latest_message"><br>
-                   <br>
+                   <input id="topic" type="text" name="topic" value="lmaoxd"><br><br>
                    <input type="button" onclick="startConnect()" value="Connect">
                    <input type="button" onclick="startDisconnect()" value="Disconnect">
-       <br><br>
+                    <br><br>
+                    <b id="status">Goal position:</b>
+                    <input id="goalpos" type="text" name="Goal position">
+                    <input type="button" onclick="FindPath()" value="Find path"><br><br>
+                    <b>Send to MQTT:</b>
                    <input id="newMessage" type="text" name="newMessage" value="">
                    <input type="button" onclick="onSend()" value="Send">
                 </form>

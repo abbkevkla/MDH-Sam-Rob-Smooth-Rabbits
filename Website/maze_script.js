@@ -9,13 +9,13 @@ console.log(transformer([
 ]));
 
 
-function change_pos() { // e is the event, containing all the data of the keypress
-    let direction = document.getElementById("latest_msg").value;
-    console.log("ran change_pos(), got: " + direction);
+function change_pos_dynamic(direction, tiletype) { // Changes the current position in the maze (old version)
+    console.log("ran change_pos(), got: " + direction + " tile: " + tiletype);
+    let activetile = tiletypes[tiletype];
+    console.log(activetile);
     if (direction == "down") {
         if (current_pos[1] < size_y - 1) {
             console.log("down");
-            steps = steps + 1;
             current_pos[1] = current_pos[1] + 1;
             relative_pos[1] = relative_pos[1] + 1;
 
@@ -23,13 +23,13 @@ function change_pos() { // e is the event, containing all the data of the keypre
                 current_height = current_height + 1;
                 let new_row = [];
                 for (let i = 0; i < current_width; i++) {
-                    new_row.push(0);
+                    new_row.push("x");
                 }
-                new_row[relative_pos[0]] = steps;
+                new_row[relative_pos[0]] = tiletype;
                 maze.push(new_row);   
             } 
             else {
-                maze[relative_pos[1]][relative_pos[0]] = steps;
+                maze[relative_pos[1]][relative_pos[0]] = tiletype;
             } 
         } 
         else {
@@ -39,21 +39,20 @@ function change_pos() { // e is the event, containing all the data of the keypre
     else if (direction == "up") {
         if (current_pos[1] > 0) {
             console.log("up");
-            steps = steps + 1;
             current_pos[1] = current_pos[1] - 1;
 
             if (typeof maze[relative_pos[1] - 1] == "undefined") {
                 current_height = current_height + 1;
                 let new_row = [];
                 for (let i = 0; i < current_width; i++) {
-                    new_row.push(0);
+                    new_row.push("x");
                 }
-                new_row[relative_pos[0]] = steps;
+                new_row[relative_pos[0]] = tiletype;
                 maze.unshift(new_row);   
             } 
             else {
                 relative_pos[1] = relative_pos[1] - 1;
-                maze[relative_pos[1]][relative_pos[0]] = steps;
+                maze[relative_pos[1]][relative_pos[0]] = tiletype;
             } 
         } 
         else {
@@ -64,17 +63,16 @@ function change_pos() { // e is the event, containing all the data of the keypre
         if (current_pos[0] > 0) {
             console.log("left");
             current_pos[0] = current_pos[0] - 1;
-            steps = steps + 1;
             if (typeof maze[relative_pos[1]][relative_pos[0] - 1] == "undefined") {
                 current_width = current_width + 1;
                 for (let i = 0; i < current_height; i++) {
-                    maze[i].unshift(0);
+                    maze[i].unshift("x");
                 }
-                maze[relative_pos[1]][0] = steps;
+                maze[relative_pos[1]][0] = tiletype;
             }
             else {
                 relative_pos[0] = relative_pos[0] - 1;
-                maze[relative_pos[1]][relative_pos[0]] = steps;
+                maze[relative_pos[1]][relative_pos[0]] = tiletype;
             }
         }
         else {
@@ -84,16 +82,15 @@ function change_pos() { // e is the event, containing all the data of the keypre
     else if (direction == "right") {
         if (current_pos[0] < size_x - 1) {
             console.log("right");
-            steps = steps + 1;
             current_pos[0] = current_pos[0] + 1; 
             relative_pos[0] = relative_pos[0] + 1;
             if (typeof maze[relative_pos[1]][relative_pos[0]] == "undefined") {
                 current_width = current_width + 1;
                 for (let i = 0; i < current_height; i++) {
-                    maze[i].push(0);
+                    maze[i].push("x");
                 }
             } 
-            maze[relative_pos[1]][relative_pos[0]] = steps;
+            maze[relative_pos[1]][relative_pos[0]] = tiletype;
         }
         else {
             console.log("can't go right");
@@ -101,43 +98,5 @@ function change_pos() { // e is the event, containing all the data of the keypre
     }
     console.log(maze);
     // console.log(current_pos);
-    draw_tiles(maze, relative_pos[0], relative_pos[1], tile_w, tile_h);
-}
-
-context.fillStyle = "purple";
-context.fillRect(0, 0, 420, 420);
-context.fill();
-context.closePath();
-
-let maze = [
-    [0]
-];
-let relative_pos = [0, 0];
-let current_pos = [0, 0];
-let steps = 0;
-let current_width = 1;
-let current_height = 1;
-
-let size_x = 6; // Maze is 6x6 squares
-let size_y = 6;
-let dist_x = 0;
-let dist_y = 0;
-let tile_w = canvas.width/size_x; // Tilesize adapts to fit the given canvas
-let tile_h = canvas.height/size_y;
-
-for (let r = 0; r < size_x; r++) { 
-    for (let c = 0; c < size_y; c++) {
-        context.beginPath();
-        context.strokeStyle = "black";
-        context.lineWidth = "3";
-        context.rect(dist_x, dist_y, tile_w, tile_h); 
-        context.stroke();
-        dist_x = dist_x + tile_w;
-    }
-    dist_x = 0;
-    dist_y = dist_y + tile_h; 
-}
-
-while (document.getElementById("status").innerHTML == "connected") {
-
+    draw_tiles(relative_pos[0], relative_pos[1], tile_w, tile_h, activetile);
 }
