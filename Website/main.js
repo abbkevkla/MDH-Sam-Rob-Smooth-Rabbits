@@ -135,28 +135,51 @@ class PriorityQueue { // A type of list where items are sorted based on a priori
 function findActions(position, map, max_row, max_col, direction) { // Used to check a tile for its value and then return it
     if (position[0] >= 0 && position[0] <= max_row) {
         if (position[1] >= 0 && position[1] <= max_col) {
-            let value = map[position[0]][position[1]];
+            let value = map[position[1]][position[0]]
             if (value != "x") { // "x" indicates that the tile can not be used
+                // console.log("(" + String(position[1]) + ", " + String(position[0]) + ")", value, direction);
                 return ["(" + String(position[0]) + ", " + String(position[1]) + ")", value, direction]
             } 
         }
     }
-    return "n/a";
 }
 
 function CreateBoard(map) { // Converts a regular 2d matrix into a dict where each tile has a list of available actions
     let mazeDict = {};
     for (let r = 0; r < map.length; r++) { // For each row
         for (let c = 0; c < map[0].length; c++) { // For each column
-            let position = "(" + String(r) + ", " + String(c) + ")";
+            let position = "(" + String(c) + ", " + String(r) + ")";
             let actions = [];
-            for (neighbour of [[[r + 1, c], "south"], [[r, c + 1], "east"], [[r - 1, c], "north"], [[r, c - 1], "west"]]) { // For each neigbour to the current tile, those being down, right, up and left
-                let action = findActions(neighbour[0], map, map[0].length - 1, map.length - 1, neighbour[1]); 
-                if (action != "n/a") {
-                    actions.push(action);
+            let neighbours = [[[c, r + 1], "south"], [[c + 1, r], "east"], [[c, r - 1], "north"], [[c - 1, r], "west"]]
+            let activetile = tiletypes[map[r][c]];
+            if (map[r][c] != "x" && typeof(activetile) != "undefined") {
+                //console.log("got through if statement @ " + [c, r])
+                if (activetile[0][1] == 0) { // If the tile has a path leading up
+                    let action = findActions(neighbours[2][0], map, map[0].length - 1, map.length - 1, neighbours[2][1])
+                    if (typeof(action) != "undefined") {
+                        actions.push(action);
+                    }
                 }
-            mazeDict[position] = {state: map[c][r], actions: actions};
+                if (activetile[1][0] == 0) { // If the tile has a path leading left
+                    let action = findActions(neighbours[3][0], map, map[0].length - 1, map.length - 1, neighbours[3][1])
+                    if (typeof(action) != "undefined") {
+                        actions.push(action);
+                    }
+                }
+                if (activetile[1][2] == 0) { // If the tile has a path leading right
+                    let action = findActions(neighbours[1][0], map, map[0].length - 1, map.length - 1, neighbours[1][1])
+                    if (typeof(action) != "undefined") {
+                        actions.push(action);
+                    }
+                }
+                if (activetile[2][1] == 0) { // If the tile has a path leading down
+                    let action = findActions(neighbours[0][0], map, map[0].length - 1, map.length - 1, neighbours[0][1])
+                    if (typeof(action) != "undefined") {
+                        actions.push(action);
+                    }
+                }
             }
+            mazeDict[position] = {state: map[r][c], actions: actions};          
         }
     }
     return mazeDict
@@ -312,12 +335,13 @@ function change_pos(direction, tiletype) { // Changes the current position in th
 
 
 function FindPath() {
-    let detailed_maze = transformer(maze);
+    let detailed_maze = CreateBoard(maze);
     console.log(detailed_maze);
-    let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
-    let goal_position = document.getElementById("goalpos").value;
-    UniformCostSearch(current_position, CreateBoard(detailed_maze), goal_position);
+    //let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
+    //let goal_position = document.getElementById("goalpos").value;
+    //UniformCostSearch(current_position, CreateBoard(detailed_maze), goal_position);
 }
+
 
 function startConnect() { // When the connect-button is pressed
     // Fetch the hostname/IP address and port number from the form
