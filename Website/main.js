@@ -93,7 +93,7 @@ for (let r = 0; r < size_x; r++) {
     dist_x = 0;
     dist_y = dist_y + tile_h; 
 }
-maze[current_pos[1]][current_pos[0]] = "S";
+maze[current_pos[1]][current_pos[0]] = "x";
 console.log(maze);
 
 
@@ -173,23 +173,29 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
         let actions = values.element[1];
         let directions = values.element[2] + ", ";
         let currentCost = values.element[3];
-        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
-            exploredNodes[currentState] = currentCost;
-            if (currentState == goalPos) { 
-                console.log(startPos, "to", goalPos ,actions, currentCost);
-                console.log("Directions: " + directions);
-                return actions, directions
-            }
-            else {
-                let successors = map[currentState];
-                for (succ of successors["actions"]) {
-                    let newAction = actions + succ[0];
-                    let newCost = currentCost + succ[1];
-                    let newDirection = directions + succ[2];
-                    let newNode = [succ[0], newAction, newDirection, newCost];
-                    frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
+        if (currentCost < (10 ** 4)) { // Set a limit to currentcost to prevent infinite looping when no path exists
+            if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
+                exploredNodes[currentState] = currentCost;
+                if (currentState == goalPos) { 
+                    console.log(startPos, "to", goalPos ,actions, currentCost);
+                    console.log("Directions: " + directions);
+                    return actions, directions
+                }
+                else {
+                    let successors = map[currentState];
+                    for (succ of successors["actions"]) {
+                        let newAction = actions + succ[0];
+                        let newCost = currentCost + succ[1];
+                        let newDirection = directions + succ[2];
+                        let newNode = [succ[0], newAction, newDirection, newCost];
+                        frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
+                    }
                 }
             }
+        }
+        else {
+            console.log("No paths possible.")
+            break           
         }
     }
 }
@@ -206,9 +212,17 @@ function transformer(matrix) { // Turns a matrix of 1*1 tiles into a matrix with
             []
         ];
         for (let c = 0; c < cols; c++) { // For each col
+            let activetile = [
+                [1, 1, 1],
+                [1, 1, 1],
+                [1, 1, 1]
+            ];
+            if (matrix[r][c] != "x") {
+                activetile = tiletypes[matrix[r][c]];
+            }
             for (let tile_row = 0; tile_row < 3; tile_row++) { // For each row and col in a tile. Tiles are always sized 3*3
                 for (let tile_col = 0; tile_col < 3; tile_col++) {
-                    chunks[tile_row].push(tile[tile_row][tile_col]);
+                    chunks[tile_row].push(activetile[tile_row][tile_col]);
                 }
             }
         }
@@ -244,8 +258,8 @@ function draw_tiles(x, y, tile_width, tile_height, tile) { // Takes a tile with 
 
 function change_pos(direction, tiletype) { // Changes the current position in the maze
     console.log("ran change_pos(), got: " + direction + " tile: " + tiletype);
+    let onborder = false;
     let activetile = tiletypes[tiletype];
-    console.log(activetile);
     if (direction == "down") {
         if (current_pos[1] < size_y - 1) {
             console.log("down");
@@ -253,6 +267,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             relative_pos[1] = relative_pos[1] + 1;
         } 
         else {
+            onborder = true;
             console.log("can't go down");
         }
     }
@@ -262,6 +277,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             current_pos[1] = current_pos[1] - 1;
         } 
         else {
+            onborder = true;
             console.log("can't go up");
         }
     }
@@ -271,6 +287,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             current_pos[0] = current_pos[0] - 1;
         }
         else {
+            onborder = true;
             console.log("can't go left");
         }
     }
@@ -281,17 +298,25 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             relative_pos[0] = relative_pos[0] + 1;
         }
         else {
+            onborder = true;
             console.log("can't go right");
         }
     }
     console.log(maze);
     // console.log(current_pos);
-    draw_tiles(relative_pos[0], relative_pos[1], tile_w, tile_h, activetile);
+    maze[current_pos[1]][current_pos[0]] = tiletype;
+    if (onborder != true) {
+        draw_tiles(current_pos[0], current_pos[1], tile_w, tile_h, activetile);
+    }
 }
 
+
 function FindPath() {
-    let goalpos = document.getElementById("goalpos").value;
-    console.log(goalpos);
+    let detailed_maze = transformer(maze);
+    console.log(detailed_maze);
+    let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
+    let goal_position = document.getElementById("goalpos").value;
+    UniformCostSearch(current_position, CreateBoard(detailed_maze), goal_position);
 }
 
 function startConnect() { // When the connect-button is pressed
@@ -326,7 +351,7 @@ function onConnect() { // Called when the client connects
     console.log(newtopic);
     // Print output for the user in the messages div
     document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + newtopic + '</span><br/>';
-    document.getElementById("status").innerHTML = "connected";
+    //document.getElementById("status").innerHTML = "connected";
 
     message = new Paho.MQTT.Message("Connected from webpage"); //Sends message to broker
     message.destinationName = newtopic;
@@ -354,7 +379,6 @@ function onConnectionLost(responseObject) { // Called when the client loses its 
 function onMessageArrived(message) { // Called when a message arrives
     console.log("onMessageArrived: " + message.payloadString);
     document.getElementById("messages").innerHTML += '<span>Topic: ' + message.destinationName + '  | ' + message.payloadString + '</span><br/>';
-    document.getElementById("latest_msg").value = message.payloadString;
     change_pos(message.payloadString.split(" ")[0], message.payloadString.split(" ")[1]);
 }
 
