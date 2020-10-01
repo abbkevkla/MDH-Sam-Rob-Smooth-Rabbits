@@ -58,8 +58,7 @@ tiletypes = [ // 0 indicates road, 1 indicates terrain
         [1, 0, 1]
     ]
 ]
-let maze = [
-];
+let maze = [];
 let relative_pos = [0, 0];
 let current_pos = [2, 4];
 let current_width = 1;
@@ -93,7 +92,7 @@ for (let r = 0; r < size_x; r++) {
     dist_x = 0;
     dist_y = dist_y + tile_h; 
 }
-maze[current_pos[1]][current_pos[0]] = "x";
+maze[current_pos[1]][current_pos[0]] = "0";
 console.log(maze);
 
 
@@ -136,9 +135,28 @@ function findActions(position, map, max_row, max_col, direction) { // Used to ch
     if (position[0] >= 0 && position[0] <= max_row) {
         if (position[1] >= 0 && position[1] <= max_col) {
             let value = map[position[1]][position[0]]
+            let new_pos = "(" + String(position[0]) + ", " + String(position[1]) + ")"
             if (value != "x") { // "x" indicates that the tile can not be used
-                // console.log("(" + String(position[1]) + ", " + String(position[0]) + ")", value, direction);
-                return ["(" + String(position[0]) + ", " + String(position[1]) + ")", value, direction]
+                if (direction == "north") {
+                    if (tiletypes[value][0][1] == 0) {
+                        return [new_pos, value, 1, direction]
+                    }
+                }
+                else if (direction == "east") {
+                    if (tiletypes[value][1][2] == 0) {
+                        return [new_pos, value, 1, direction]
+                    }
+                }
+                else if (direction == "south") {
+                    if (tiletypes[value][2][1] == 0) {
+                        return [new_pos, value, 1, direction]
+                    }
+                }
+                else if (direction == "west") {
+                    if (tiletypes[value][1][0] == 0) {
+                        return [new_pos, value, 1, direction]
+                    }
+                }
             } 
         }
     }
@@ -179,47 +197,48 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
                     }
                 }
             }
-            mazeDict[position] = {state: map[r][c], actions: actions};          
+            mazeDict[position] = {state: map[r][c], cost: 1, actions: actions};          
         }
     }
     return mazeDict
 }
 
 function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possible path
+    let foundgoal = false;
     let frontier = new PriorityQueue();
     exploredNodes = {};
     let startNode = [startPos, [], ["start"], 0]; // Startpos, actions, directions, cost
     frontier.enqueue(startNode, 0);
-    while (frontier.isEmpty != true) {
+    console.log(frontier["items"])
+    console.log(frontier["items"].length)
+    while (frontier["items"].length != 0) {
         let values = frontier.dequeue() // Removes and returns the item with lowest priority
         let currentState = values.element[0];
         let actions = values.element[1];
         let directions = values.element[2] + ", ";
         let currentCost = values.element[3];
-        if (currentCost < (10 ** 4)) { // Set a limit to currentcost to prevent infinite looping when no path exists
-            if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
-                exploredNodes[currentState] = currentCost;
-                if (currentState == goalPos) { 
-                    console.log(startPos, "to", goalPos ,actions, currentCost);
-                    console.log("Directions: " + directions);
-                    return actions, directions
-                }
-                else {
-                    let successors = map[currentState];
-                    for (succ of successors["actions"]) {
-                        let newAction = actions + succ[0];
-                        let newCost = currentCost + succ[1];
-                        let newDirection = directions + succ[2];
-                        let newNode = [succ[0], newAction, newDirection, newCost];
-                        frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
-                    }
+        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
+            exploredNodes[currentState] = currentCost;
+            if (currentState == goalPos) { 
+                foundgoal = true;
+                console.log(startPos, "to", goalPos ,actions, currentCost);
+                console.log("Directions: " + directions);
+                return actions, directions
+            }
+            else {
+                let successors = map[currentState];
+                for (succ of successors["actions"]) {
+                    let newAction = actions + succ[0];
+                    let newCost = currentCost + succ[2];
+                    let newDirection = directions + succ[3];
+                    let newNode = [succ[0], newAction, newDirection, newCost];
+                    frontier.enqueue(newNode, newCost); // Adds all possible movements to frontier
                 }
             }
         }
-        else {
-            console.log("No paths possible.")
-            break           
-        }
+    }
+    if (foundgoal == false) {
+        console.log("No paths possible.")          
     }
 }
 
@@ -337,9 +356,9 @@ function change_pos(direction, tiletype) { // Changes the current position in th
 function FindPath() {
     let detailed_maze = CreateBoard(maze);
     console.log(detailed_maze);
-    //let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
-    //let goal_position = document.getElementById("goalpos").value;
-    //UniformCostSearch(current_position, CreateBoard(detailed_maze), goal_position);
+    let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
+    let goal_position = document.getElementById("goalpos").value;
+    UniformCostSearch(current_position, detailed_maze, goal_position);
 }
 
 
