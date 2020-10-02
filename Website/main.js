@@ -138,22 +138,22 @@ function findActions(position, map, max_row, max_col, direction) { // Used to ch
             let new_pos = "(" + String(position[0]) + ", " + String(position[1]) + ")"
             if (value != "x") { // "x" indicates that the tile can not be used
                 if (direction == "north") {
-                    if (tiletypes[value][0][1] == 0) {
-                        return [new_pos, value, 1, direction]
-                    }
-                }
-                else if (direction == "east") {
-                    if (tiletypes[value][1][2] == 0) {
-                        return [new_pos, value, 1, direction]
-                    }
-                }
-                else if (direction == "south") {
                     if (tiletypes[value][2][1] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
-                else if (direction == "west") {
+                else if (direction == "east") {
                     if (tiletypes[value][1][0] == 0) {
+                        return [new_pos, value, 1, direction]
+                    }
+                }
+                else if (direction == "south") {
+                    if (tiletypes[value][0][1] == 0) {
+                        return [new_pos, value, 1, direction]
+                    }
+                }
+                else if (direction == "west") {
+                    if (tiletypes[value][1][2] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
@@ -217,7 +217,7 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
         let actions = values.element[1];
         let directions = values.element[2] + ", ";
         let currentCost = values.element[3];
-        if (currentState in exploredNodes != true || currentCost > exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
+        if (currentState in exploredNodes != true || currentCost < exploredNodes[currentState]) { // If the node has not already been explored or a new cheaper path has been found
             exploredNodes[currentState] = currentCost;
             if (currentState == goalPos) { 
                 foundgoal = true;
@@ -351,7 +351,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         draw_tiles(current_pos[0], current_pos[1], tile_w, tile_h, activetile);
     }
 }
-
 
 function FindPath() {
     let detailed_maze = CreateBoard(maze);
