@@ -11,7 +11,7 @@ fm.register(board_info.PIN15, fm.fpioa.UART1_TX, force = True) # Sets pin15 as n
 
 uart_A = UART(UART.UART1, 115200, 8, None, 1, timeout = 1000, read_buf_len = 4096)
 
-THRESHOLD = (0, 230)
+THRESHOLD = (0, 175)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
@@ -67,35 +67,47 @@ while(True):
        img.draw_line(checking_line.line(), color = (255, 255, 0), thickness = 5)
        fault = center_line[0] - 159 # Fault is based on how far the center line is from center of the sreen
        uart_A.write(str(fault))
+       print("UART:", fault)
 
 
     if len(crossings) > 1:
+        uart_A.write("a")
         print("4-vägskorsning")
     elif len(crossings) == 1:
         if crossings[0][5] < 106:
+            uart_A.write("b")
             print("T-korsning <--")
         elif crossings[0][5] > 212:
+            uart_A.write("c")
             print("T-korsning -->")
         elif crossings[0][6] < 80:
+            uart_A.write("d")
             print("T-korsning ^")
         elif crossings[0][6] > 160:
+            uart_A.write("e")
             print("T-korsning v")
         else:
             print("whack")
     elif len(lines) > 2: # If enough line-blobs are found:
         if checking_line.theta() > 20 and checking_line.theta() < 70: # Checks angle of checking line
             if checking_line[1] > 200 or checking_line[3] > 200: # Checks if line is found on bottom of screen
+                uart_A.write("f")
                 print("Sväng ^>")
             else:
+                uart_A.write("g")
                 print("Sväng <v")
         elif checking_line.theta() > 110 and checking_line.theta() < 160:
             if checking_line[1] > 200 or checking_line[3] > 200:
+                uart_A.write("h")
                 print("Sväng <^")
             else:
+                uart_A.write("i")
                 print("Sväng v>")
         elif checking_line.theta() > 45 and checking_line.theta() < 135:
+            uart_A.write("j")
             print("Raksträcka ---")
         else:
+            uart_A.write("k")
             print("Raksträcka |")
     else:
         print("Nuthin'")
