@@ -11,7 +11,7 @@ fm.register(board_info.PIN15, fm.fpioa.UART1_TX, force = True) # Sets pin15 as n
 
 uart_A = UART(UART.UART1, 115200, 8, None, 1, timeout = 1000, read_buf_len = 4096)
 
-THRESHOLD = (0, 180)
+THRESHOLD = (0, 35)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
@@ -23,11 +23,18 @@ lcd.init()
 
 current_orientation = "north"
 Found_centerline = False
+Found_crossing = False
 centerlines = 0
+crossingsFound = 0
+offCenterCrossing = False
 
 def Send_tile (tiletype, direction):
     if tiletype == "straight":
         print("Raksträcka |")
+    elif tiletype == "4-cross":
+        print("4-way +")
+    elif tiletype == "T-cross":
+        print("T-cross T")
 
 
 while(True):
@@ -38,32 +45,54 @@ while(True):
     bw_img = img.copy().to_grayscale()
     bw_img.binary([THRESHOLD],invert = True) # Convert img to binary, black and white
     blobs = bw_img.find_blobs([(120, 256)]) # Find white spots
+    center_line = bw_img.find_blobs([(120, 256)], roi = (120, 238, 80, 2)) # Used to count tiles
 
-    center_line = bw_img.find_blobs([(120, 256)], roi = (120, 238, 80, 2))
     if Found_centerline == True:
         tmp=img.draw_rectangle((0, 0, 10, 10), color = (0, 213, 140), fill = True)
     else:
         tmp=img.draw_rectangle((0, 0, 10, 10), color = (213, 140, 0), fill = True)
 
+    if Found_crossing == True:
+        tmp=img.draw_rectangle((310, 0, 10, 10), color = (0, 255, 0), fill = True)
+    else:
+        tmp=img.draw_rectangle((310, 0, 10, 10), color = (255, 136, 0), fill = True)
+
+    if offCenterCrossing == True:
+        tmp=img.draw_rectangle((0, 230, 10, 10), color = (0, 110, 255), fill = True)
+
+
     if center_line:
-        if len(center_line) > 1:
+        if len(center_line) > 1: # If multiple lines are found, which means there is a crossing
             print("found overwalking mannen")
-        else:
-        print("found center line, very epic")
-        if Found_centerline == False:
-            Found_centerline = True
-            centerlines = centerlines + 1
-            if centerlines >= 4:
-                tmp=img.draw_rectangle((310, 0, 10, 10), color = (213, 0, 145), fill = True)
-                centerlines = 0
-        else:
-            pass
+            if Found_crossing == False:
+                Found_crossing = True
+                crossingsFound = crossingsFound + 1
+                if crossingsFound > 1:
+                    tmp=img.draw_rectangle((310, 0, 10, 10), color = (255, 255, 255), fill = True)
+                    crossingsFound = 0
+                    centerlines = 0
+
+        else: # If only one centerline is found
+            print("found center line, very epic")
+            if Found_centerline == False:
+                Found_centerline = True
+                centerlines = centerlines + 1
+                if centerlines >= 4:
+                    if offCenterCrossing == True:
+                        tmp=img.draw_rectangle((0, 230, 10, 10), color = (213, 0, 145), fill = True)
+                        offCenterCrossing = False
+                    else:
+                        tmp=img.draw_rectangle((0, 230, 10, 10), color = (255, 255, 255), fill = True)
+                    centerlines = 0
+                    crossingsfound = 0
 
     else:
         print("No center line, big sad ;-;")
+        Found_crossing = False
         Found_centerline = False
 
     print("centerlines found: " + str(centerlines))
+    print("crossings found: " + str(crossingsFound))
 
     lcd.display(bw_img)
     bw_img.clear()
@@ -84,6 +113,7 @@ while(True):
         for b in merged_blobs:
             if b.area() > 2000 and b.count() > 2: # If blob is big enough and consists of 3 or more small blobs
                 crossings.append(b)
+                offCenterCrossing = True
                 tmp=img.draw_rectangle(b[0:4], color = (255, 136, 0))
             elif b.area() > 150: # Ignores the smallest blobs to avoid errors
                 lines.append(b)
