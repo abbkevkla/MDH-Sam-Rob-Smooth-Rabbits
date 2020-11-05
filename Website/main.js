@@ -80,7 +80,7 @@ context.closePath();
 for (let r = 0; r < size_x; r++) { 
     let maze_row = [];
     for (let c = 0; c < size_y; c++) {
-        maze_row.push("x");
+        maze_row.push("?"); // "?" indicates unexplored tiles
         context.beginPath();
         context.strokeStyle = "black";
         context.lineWidth = "2";
@@ -138,22 +138,34 @@ function findActions(position, map, max_row, max_col, direction) { // Used to ch
             let new_pos = "(" + String(position[0]) + ", " + String(position[1]) + ")"
             if (value != "x") { // "x" indicates that the tile can not be used
                 if (direction == "north") {
-                    if (tiletypes[value][2][1] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][2][1] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
                 else if (direction == "east") {
-                    if (tiletypes[value][1][0] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][1][0] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
                 else if (direction == "south") {
-                    if (tiletypes[value][0][1] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][0][1] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
                 else if (direction == "west") {
-                    if (tiletypes[value][1][2] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][1][2] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
@@ -360,6 +372,18 @@ function FindPath() {
     UniformCostSearch(current_position, detailed_maze, goal_position);
 }
 
+function MovePlanner() {
+    let detailed_maze = CreateBoard(maze);
+    console.log(detailed_maze);
+    for (tiles in detailed_maze) {
+        if (detailed_maze[tiles]["actions"].length != 0) {
+            for (action of detailed_maze[tiles]["actions"]) {
+                console.log(action[0] + " can be explored!");
+            }
+            console.log(tiles);
+        }
+    }
+}
 
 function startConnect() { // When the connect-button is pressed
     // Fetch the hostname/IP address and port number from the form
