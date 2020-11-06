@@ -59,10 +59,8 @@ tiletypes = [ // 0 indicates road, 1 indicates terrain
     ]
 ]
 let maze = [];
-let relative_pos = [0, 0];
-let current_pos = [2, 4];
-let current_width = 1;
-let current_height = 1;
+let current_pos = [2, 4]; // Starting position
+let start_tile = "0"; // Starting tile
 
 let size_x = 6; // Maze is 6x6 squares
 let size_y = 6;
@@ -73,8 +71,7 @@ let tile_h = canvas.height/size_y;
 
 context.fillStyle = "DarkViolet";
 context.fillRect(0, 0, canvas.width, canvas.height);
-context.fillStyle = "Chartreuse";
-context.fillRect(current_pos[0] * tile_w, current_pos[1] * tile_h, tile_w, tile_h); 
+draw_tiles(current_pos[0], current_pos[1], tile_w, tile_h, tiletypes[0]);
 context.closePath();
 
 for (let r = 0; r < size_x; r++) { 
@@ -92,7 +89,7 @@ for (let r = 0; r < size_x; r++) {
     dist_x = 0;
     dist_y = dist_y + tile_h; 
 }
-maze[current_pos[1]][current_pos[0]] = "0";
+maze[current_pos[1]][current_pos[0]] = start_tile;
 console.log(maze);
 
 
@@ -182,7 +179,7 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
             let actions = [];
             let neighbours = [[[c, r + 1], "south"], [[c + 1, r], "east"], [[c, r - 1], "north"], [[c - 1, r], "west"]]
             let activetile = tiletypes[map[r][c]];
-            if (map[r][c] != "x" && typeof(activetile) != "undefined") {
+            if (map[r][c] != "x" && typeof(activetile) != "undefined" && map[r][c] != "g") {
                 //console.log("got through if statement @ " + [c, r])
                 if (activetile[0][1] == 0) { // If the tile has a path leading up
                     let action = findActions(neighbours[2][0], map, map[0].length - 1, map.length - 1, neighbours[2][1])
@@ -221,8 +218,6 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
     exploredNodes = {};
     let startNode = [startPos, [], ["start"], 0]; // Startpos, actions, directions, cost
     frontier.enqueue(startNode, 0);
-    console.log(frontier["items"])
-    console.log(frontier["items"].length)
     while (frontier["items"].length != 0) {
         let values = frontier.dequeue() // Removes and returns the item with lowest priority
         let currentState = values.element[0];
@@ -235,7 +230,7 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
                 foundgoal = true;
                 console.log(startPos, "to", goalPos ,actions, currentCost);
                 console.log("Directions: " + directions);
-                return actions, directions
+                return [actions, directions, currentCost]
             }
             else {
                 let successors = map[currentState];
@@ -250,7 +245,8 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
         }
     }
     if (foundgoal == false) {
-        console.log("No paths possible.")          
+        console.log("No paths possible.") 
+        return "no paths"         
     }
 }
 
@@ -318,7 +314,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         if (current_pos[1] < size_y - 1) {
             console.log("down");
             current_pos[1] = current_pos[1] + 1;
-            relative_pos[1] = relative_pos[1] + 1;
         } 
         else {
             onborder = true;
@@ -349,7 +344,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         if (current_pos[0] < size_x - 1) {
             console.log("right");
             current_pos[0] = current_pos[0] + 1; 
-            relative_pos[0] = relative_pos[0] + 1;
         }
         else {
             onborder = true;
@@ -372,17 +366,28 @@ function FindPath() {
     UniformCostSearch(current_position, detailed_maze, goal_position);
 }
 
-function MovePlanner() {
+function MovePlanner() { // Makes a plan for how to explore the maze
+    let current_path = [];
+    let cheapest_path = [];
+    let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
     let detailed_maze = CreateBoard(maze);
     console.log(detailed_maze);
     for (tiles in detailed_maze) {
         if (detailed_maze[tiles]["actions"].length != 0) {
             for (action of detailed_maze[tiles]["actions"]) {
-                console.log(action[0] + " can be explored!");
+                if (action[1] == "unexplored") {
+                    // console.log(action[0] + " can be explored!");
+                    current_path = UniformCostSearch(current_position, detailed_maze, action[0])
+                    if (current_path != "no paths") {
+                        if (cheapest_path.length == 0 || current_path[2] < cheapest_path[2]) {
+                            cheapest_path = current_path;
+                        }
+                    }
+                }
             }
-            console.log(tiles);
         }
     }
+    console.log(cheapest_path);
 }
 
 function startConnect() { // When the connect-button is pressed
