@@ -392,15 +392,15 @@ function MovePlanner() { // Makes a plan for how to explore the maze
 
 function startConnect() { // When the connect-button is pressed
     // Fetch the hostname/IP address and port number from the form
-    clientID = document.getElementById("ID").value;
-    host = document.getElementById("host").value;
-    port = document.getElementById("port").value;
+    // clientID = document.getElementById("ID").value;
+    // host = document.getElementById("host").value;
+    // port = document.getElementById("port").value;
 
     // Print output for the user in the messages div
-    document.getElementById("messages").innerHTML += '<span>Connecting to: ' + host + ' on port: ' + port + '</span><br/>';
-    document.getElementById("messages").innerHTML += '<span>Using the following client value: ' + clientID + '</span><br/>';
+    // document.getElementById("messages").innerHTML += '<span>Connecting to: ' + host + ' on port: ' + port + '</span><br/>';
+    // document.getElementById("messages").innerHTML += '<span>Using the following client value: ' + clientID + '</span><br/>';
   // Initialize new Paho client connection
-    client = new Paho.MQTT.Client(host, Number(port), clientID);
+    client = new Paho.MQTT.Client("maqiatto.com", 8883, "dinmammapåpizza");
     // Set callback handlers
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
@@ -411,32 +411,33 @@ function startConnect() { // When the connect-button is pressed
                    });
 }
 function onFail() {
-    document.getElementById("messages").innerHTML += '<span>ERROR: Connection to: ' + host + ' on port: ' + port + ' failed.</span><br/>'
+    document.getElementById("messages").innerHTML += '<span>ERROR: Connection failed.</span><br/>'
 }  
 
 let topic="kevin.klarin@abbindustrigymnasium.se/";
 
 function onConnect() { // Called when the client connects
     // Fetch the MQTT topic from the form
-    newtopic = topic + document.getElementById("topic").value;
-    console.log(newtopic);
+    subtopic = topic + document.getElementById("subtopic").value; 
+    pubtopic = topic + document.getElementById("pubtopic").value;
+    // console.log(newtopic);
     // Print output for the user in the messages div
-    document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + newtopic + '</span><br/>';
+    document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + subtopic + '</span><br/>';
     //document.getElementById("status").innerHTML = "connected";
 
     message = new Paho.MQTT.Message("Connected from webpage"); //Sends message to broker
-    message.destinationName = newtopic;
+    message.destinationName = pubtopic;
     client.send(message);
 
     // Subscribe to the requested topic
-    client.subscribe(newtopic);
+    client.subscribe(subtopic);
 }
 function onSend() {
     // Fetch the MQTT topic from the form
     // Print output for the user in the messages div'
     let message= document.getElementById("newMessage").value;
       message = new Paho.MQTT.Message(message);
-      message.destinationName = newtopic;
+      message.destinationName = pubtopic;
       client.send(message);
 }
 
