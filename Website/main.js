@@ -59,24 +59,24 @@ tiletypes = [ // 0 indicates road, 1 indicates terrain
     ]
 ]
 let maze = [];
-let current_pos = [2, 4]; // Starting position
+let current_pos = [2, 2]; // Starting position
 let start_tile = "0"; // Starting tile
 
-let size_x = 6; // Maze is 6x6 squares
-let size_y = 6;
+let size_x = 6; // Maze is 6x3 squares
+let size_y = 3;
 let dist_x = 0;
 let dist_y = 0;
 let tile_w = canvas.width/size_x; // Tilesize adapts to fit the given canvas
 let tile_h = canvas.height/size_y;
 
-context.fillStyle = "DarkViolet";
+context.fillStyle = "DimGrey";
 context.fillRect(0, 0, canvas.width, canvas.height);
 draw_tiles(current_pos[0], current_pos[1], tile_w, tile_h, tiletypes[0]);
 context.closePath();
 
-for (let r = 0; r < size_x; r++) { 
+for (let r = 0; r < size_y; r++) { 
     let maze_row = [];
-    for (let c = 0; c < size_y; c++) {
+    for (let c = 0; c < size_x; c++) {
         maze_row.push("?"); // "?" indicates unexplored tiles
         context.beginPath();
         context.strokeStyle = "black";
@@ -250,38 +250,6 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
     }
 }
 
-function transformer(matrix) { // Turns a matrix of 1*1 tiles into a matrix with 3*3 tiles
-    let rows = matrix.length;
-    let cols = matrix[0].length;
-    let chunks = [];
-    let new_matrix = []
-    for (let r = 0; r < rows; r++) { // For each row
-        chunks = [ // Pushes 3 new rows at a time to new_matrix
-            [],
-            [],
-            []
-        ];
-        for (let c = 0; c < cols; c++) { // For each col
-            let activetile = [
-                [1, 1, 1],
-                [1, 1, 1],
-                [1, 1, 1]
-            ];
-            if (matrix[r][c] != "x") {
-                activetile = tiletypes[matrix[r][c]];
-            }
-            for (let tile_row = 0; tile_row < 3; tile_row++) { // For each row and col in a tile. Tiles are always sized 3*3
-                for (let tile_col = 0; tile_col < 3; tile_col++) {
-                    chunks[tile_row].push(activetile[tile_row][tile_col]);
-                }
-            }
-        }
-        for (let chunk of chunks) {
-            new_matrix.push(chunk); // Push all chunks to new_matrix
-        }
-    }
-    return(new_matrix);
-}
 
 function draw_tiles(x, y, tile_width, tile_height, tile) { // Takes a tile with a single value and turns it into a 3*3 tile that resembles the actual road
     let new_width = tile_width/3; // Divides the width and height by 3 to create a 3*3 tile, since that is how the more detailed tiles look
@@ -369,6 +337,7 @@ function FindPath() {
 function MovePlanner() { // Makes a plan for how to explore the maze
     let current_path = [];
     let cheapest_path = [];
+    let goal_pos = "";
     let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
     let detailed_maze = CreateBoard(maze);
     console.log(detailed_maze);
@@ -381,25 +350,18 @@ function MovePlanner() { // Makes a plan for how to explore the maze
                     if (current_path != "no paths") {
                         if (cheapest_path.length == 0 || current_path[2] < cheapest_path[2]) {
                             cheapest_path = current_path;
+                            goal_pos = action[0];
                         }
                     }
                 }
             }
         }
     }
-    console.log(cheapest_path);
+    console.log("Next move: " + goal_pos + " Directions: " + cheapest_path[1])
+    //console.log(cheapest_path);
 }
 
 function startConnect() { // When the connect-button is pressed
-    // Fetch the hostname/IP address and port number from the form
-    // clientID = document.getElementById("ID").value;
-    // host = document.getElementById("host").value;
-    // port = document.getElementById("port").value;
-
-    // Print output for the user in the messages div
-    // document.getElementById("messages").innerHTML += '<span>Connecting to: ' + host + ' on port: ' + port + '</span><br/>';
-    // document.getElementById("messages").innerHTML += '<span>Using the following client value: ' + clientID + '</span><br/>';
-  // Initialize new Paho client connection
     client = new Paho.MQTT.Client("maqiatto.com", 8883, "dinmammapåpizza");
     // Set callback handlers
     client.onConnectionLost = onConnectionLost;
@@ -423,7 +385,6 @@ function onConnect() { // Called when the client connects
     // console.log(newtopic);
     // Print output for the user in the messages div
     document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + subtopic + '</span><br/>';
-    //document.getElementById("status").innerHTML = "connected";
 
     message = new Paho.MQTT.Message("Connected from webpage"); //Sends message to broker
     message.destinationName = pubtopic;
