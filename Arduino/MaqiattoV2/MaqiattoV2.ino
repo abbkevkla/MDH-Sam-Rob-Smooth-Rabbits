@@ -1,8 +1,8 @@
 #include "EspMQTTClient.h"
 
 EspMQTTClient client(
-  "ABB_Indgym",
-  "7Laddaremygglustbil",
+  "ABB_Indgym_Guest",
+  "Welcome2abb",
   "maqiatto.com",  // MQTT Broker server ip
   "kevin.klarin@abbindustrigymnasium.se",   // Can be omitted if not needed
   "1337",   // Can be omitted if not needed
@@ -16,7 +16,6 @@ void setup() {
 void onConnectionEstablished() {
   Serial.println("connected");
   client.subscribe("kevin.klarin@abbindustrigymnasium.se/lmaoxd", [] (const String &payload)  {
-    
     Serial.println(payload);
   });
 

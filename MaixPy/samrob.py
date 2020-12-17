@@ -9,11 +9,12 @@ from board import board_info
 fm.register(board_info.PIN15, fm.fpioa.UART1_TX, force = True) # Sets pin15 as new TX-pin
 # fm.register(board_info.PIN17, fm.fpioa.UART1_RX, force=True)
 # fm.register(board_info.PIN9, fm.fpioa.UART2_TX, force=True)
-# fm.register(board_info.PIN10, fm.fpioa.UART2_RX, force=True)
+fm.register(board_info.PIN10, fm.fpioa.UART2_RX, force=True)
 
 uart_A = UART(UART.UART1, 115200, 8, None, 1, timeout = 1000, read_buf_len = 4096)
+uart_B = UART(UART.UART2, 115200, 8, None, 1, timeout = 1000, read_buf_len = 4096)
 
-THRESHOLD = (0, 90)
+THRESHOLD = (0, 65)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
@@ -26,9 +27,14 @@ lcd.init()
 Found_centerline = False
 Found_crossing = False
 centerlines = 4
+roadlength = 4
 crossingsFound = 0
 offCenterCrossing = False
 faultcount = 0
+turn = False
+
+green_threshold   = (100, 0, -16, -128, 5, 15)
+yellow_threshold   = (73, 0, -4, 2, 13, 50)
 
 while(True):
     lines = []
@@ -38,7 +44,7 @@ while(True):
     bw_img = img.copy().to_grayscale()
     bw_img.binary([THRESHOLD],invert = True) # Convert img to binary, black and white
     blobs = bw_img.find_blobs([(120, 256)]) # Find white spots
-    middle_line = bw_img.find_blobs([(120, 256)], roi = (120, 238, 80, 2)) # Used to count tiles
+    middle_line = bw_img.find_blobs([(120, 256)], roi = (100, 238, 120, 2)) # Used to count tiles
 
     if Found_centerline == True:
         tmp=img.draw_rectangle((0, 0, 10, 10), color = (0, 213, 140), fill = True)
@@ -73,6 +79,22 @@ while(True):
 
     bw_img.clear()
 
+    greenblobs = img.find_blobs([green_threshold], area_threshold=40, merge=True, margin=10)
+    if greenblobs:
+        for b in greenblobs:
+            tmp=img.draw_rectangle(b[0:4], color=(0, 180, 55))
+            if b[1] + b[3] >= 230:
+                print("green")
+                uart_A.write("n")
+                uart_A.write("n")
+                uart_A.write("n")
+
+    yellowblobs = img.find_blobs([yellow_threshold], area_threshold=50, pixels_threshold=20, merge=True, margin=25)
+    if yellowblobs:
+            for b in yellowblobs:
+                tmp=img.draw_rectangle(b[0],b[1],320,240, color=(255, 221, 0))
+                tmp=img.draw_rectangle(0,0,320,240, color=(255, 221, 0))
+
     if merged_blobs:
         for b in merged_blobs:
             if b.area() > 2000 and b.count() > 2: # If blob is big enough and consists of 3 or more small blobs
@@ -96,7 +118,7 @@ while(True):
         img.draw_line(checking_line.line(), color = (255, 255, 0), thickness = 5)
         fault = center_line[0] - 159 # Fault is based on how far the center line is from center of the sreen
         faultcount += 1
-        if faultcount >= 5:
+        if faultcount >= 1 and not yellowblobs:
             uart_A.write(str(fault))
             print("UART:", fault)
             faultcount = 0
@@ -166,41 +188,55 @@ while(True):
       else:
           print("Nuthin'")
 
-    #print("yeet")
-    if middle_line:
-        #print("skeet")
-        if len(middle_line) > 1: # If multiple lines are found, which means there is a crossing
-            #print("found overwalking mannen")
-            if Found_crossing == False:
-                Found_crossing = True
-                crossingsFound = crossingsFound + 1
-                if crossingsFound > 1:
-                    tmp=img.draw_rectangle((310, 0, 10, 10), color = (255, 255, 255), fill = True)
-                    crossingsFound = 0
-                    centerlines = 0
+    readstring = uart_B.read()
+    print("message: " + str(readstring))
 
-        else: # If only one centerline is found
-            #print("found center line, very epic")
-            if Found_centerline == False:
-                Found_centerline = True
-                centerlines = centerlines + 1
-                if centerlines >= 4:
-                    uart_A.write("l")
-                    uart_A.write("l")
-                    uart_A.write("l")
-                    print("Wait l")
-                    time.sleep(1)
-                    FindRoad()
-                    print("RoadFind")
-                    if offCenterCrossing == True:
-                        tmp=img.draw_rectangle((0, 230, 10, 10), color = (213, 0, 145), fill = True)
-                        offCenterCrossing = False
-                    else:
-                        tmp=img.draw_rectangle((0, 230, 10, 10), color = (255, 255, 255), fill = True)
-                    centerlines = 0
-                    crossingsfound = 0
+    if yellowblobs:
+        print("yellow")
+        uart_A.write("m")
+    elif readstring and "t" in readstring:
+        print("turn")
+        turn = True
+        centerlines = 4
+    elif readstring and "d" in readstring:
+        print("done")
+        turn = False
+    elif turn == False:
+        print(roadlength)
+        if middle_line:
+            #print("skeet")
+            if len(middle_line) > 1: # If multiple lines are found, which means there is a crossing
+                #print("found overwalking mannen")
+                if Found_crossing == False:
+                    Found_crossing = True
+                    crossingsFound = crossingsFound + 1
+                    if crossingsFound > 1:
+                        tmp=img.draw_rectangle((310, 0, 10, 10), color = (255, 255, 255), fill = True)
+                        crossingsFound = 0
+                        centerlines = 0
 
-    else:
-        print("No center line, big sad ;-;")
-        Found_crossing = False
-        Found_centerline = False
+            else: # If only one centerline is found
+                #print("found center line, very epic")
+                if Found_centerline == False:
+                    Found_centerline = True
+                    centerlines = centerlines + 1
+                    if centerlines >= 4:
+                        uart_A.write("l")
+                        uart_A.write("l")
+                        uart_A.write("l")
+                        print("Wait l")
+                        time.sleep(1)
+                        FindRoad()
+                        print("RoadFind")
+                        if offCenterCrossing == True:
+                            tmp=img.draw_rectangle((0, 230, 10, 10), color = (213, 0, 145), fill = True)
+                            offCenterCrossing = False
+                        else:
+                            tmp=img.draw_rectangle((0, 230, 10, 10), color = (255, 255, 255), fill = True)
+                        centerlines = 0
+                        crossingsfound = 0
+
+        else:
+            print("No center line, big sad ;-;")
+            Found_crossing = False
+            Found_centerline = False

@@ -1,35 +1,33 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="style.css">
         <title>
-            Hehexd
+            Smooth Rabbits Maze Viewer
         </title>
     </head>
     <body>
-        <canvas id="myCanvas" width="396" height="396"></canvas>
+        <canvas id="myCanvas" width="594" height="297"></canvas>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-        <!-- <script src=MQTT_script.js></script>
-        <script src=maze_script.js type="module"></script> -->
         <script src=main.js></script>
         
 
         <div class="wrapper">
                 <form id="connection-information-form">
-                   <b>Hostname or IP Address:</b> 
-                   <input id="host" type="text" name="host" value="maqiatto.com"><br>
-                   <b>Client ID:</b> 
-                   <input id="ID" type="text" name="ID" value="Angenäm gubbe"><br>
-                   <b>Port:</b>
-                   <input id="port" type="text" name="port" value="8883"><br>
-                   <b>Topic:</b>
-                   <input id="topic" type="text" name="topic" value="lmaoxd"><br><br>
+                   <b>Sub-topic:</b>
+                   <input id="subtopic" type="text" value="lmaoxd"><br>
+                   <b>Pub-topic:</b>
+                   <input id="pubtopic" type="text" value="lmaoxd"><br>
+                   <b>Start position</b>
+                   <input id="start_pos" type="text" value=""><br>
+                   <b>Start direction</b>
+                   <input id="start_dir" type="text" value=""><br>
                    <input type="button" onclick="startConnect()" value="Connect">
                    <input type="button" onclick="startDisconnect()" value="Disconnect">
                     <br><br>
                     <b>Goal position:</b>
                     <input id="goalpos" type="text" name="Goal position">
-                    <input type="button" onclick="FindPath()" value="Find path"><br><br>
+                    <input type="button" onclick="FindPath()" value="Find path">
+                    <input type="button" onclick="MovePlanner()" value="MovePlanner"><br><br>
                     <b>Send to MQTT:</b>
                    <input id="newMessage" type="text" name="newMessage" value="">
                    <input type="button" onclick="onSend()" value="Send">
@@ -37,4 +35,9 @@
             <div id="messages"></div>
         </div>
     </body>
+    <style>
+        body {
+            background-color: gray;
+        }
+    </style>
 </html>

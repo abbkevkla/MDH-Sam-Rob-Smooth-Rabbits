@@ -59,28 +59,25 @@ tiletypes = [ // 0 indicates road, 1 indicates terrain
     ]
 ]
 let maze = [];
-let relative_pos = [0, 0];
-let current_pos = [2, 4];
-let current_width = 1;
-let current_height = 1;
+let current_pos = [2, 2]; // Starting position
+let start_tile = "0"; // Starting tile
 
-let size_x = 6; // Maze is 6x6 squares
-let size_y = 6;
+let size_x = 6; // Maze is 6x3 squares
+let size_y = 3;
 let dist_x = 0;
 let dist_y = 0;
 let tile_w = canvas.width/size_x; // Tilesize adapts to fit the given canvas
 let tile_h = canvas.height/size_y;
 
-context.fillStyle = "DarkViolet";
+context.fillStyle = "DimGrey";
 context.fillRect(0, 0, canvas.width, canvas.height);
-context.fillStyle = "Chartreuse";
-context.fillRect(current_pos[0] * tile_w, current_pos[1] * tile_h, tile_w, tile_h); 
+draw_tiles(current_pos[0], current_pos[1], tile_w, tile_h, tiletypes[0]);
 context.closePath();
 
-for (let r = 0; r < size_x; r++) { 
+for (let r = 0; r < size_y; r++) { 
     let maze_row = [];
-    for (let c = 0; c < size_y; c++) {
-        maze_row.push("x");
+    for (let c = 0; c < size_x; c++) {
+        maze_row.push("?"); // "?" indicates unexplored tiles
         context.beginPath();
         context.strokeStyle = "black";
         context.lineWidth = "2";
@@ -92,7 +89,7 @@ for (let r = 0; r < size_x; r++) {
     dist_x = 0;
     dist_y = dist_y + tile_h; 
 }
-maze[current_pos[1]][current_pos[0]] = "0";
+maze[current_pos[1]][current_pos[0]] = start_tile;
 console.log(maze);
 
 
@@ -138,22 +135,34 @@ function findActions(position, map, max_row, max_col, direction) { // Used to ch
             let new_pos = "(" + String(position[0]) + ", " + String(position[1]) + ")"
             if (value != "x") { // "x" indicates that the tile can not be used
                 if (direction == "north") {
-                    if (tiletypes[value][2][1] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][2][1] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
                 else if (direction == "east") {
-                    if (tiletypes[value][1][0] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][1][0] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
                 else if (direction == "south") {
-                    if (tiletypes[value][0][1] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][0][1] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
                 else if (direction == "west") {
-                    if (tiletypes[value][1][2] == 0) {
+                    if (value == "?") {
+                        return [new_pos, "unexplored", 1, direction]
+                    }
+                    else if (tiletypes[value][1][2] == 0) {
                         return [new_pos, value, 1, direction]
                     }
                 }
@@ -170,7 +179,7 @@ function CreateBoard(map) { // Converts a regular 2d matrix into a dict where ea
             let actions = [];
             let neighbours = [[[c, r + 1], "south"], [[c + 1, r], "east"], [[c, r - 1], "north"], [[c - 1, r], "west"]]
             let activetile = tiletypes[map[r][c]];
-            if (map[r][c] != "x" && typeof(activetile) != "undefined") {
+            if (map[r][c] != "x" && typeof(activetile) != "undefined" && map[r][c] != "g") {
                 //console.log("got through if statement @ " + [c, r])
                 if (activetile[0][1] == 0) { // If the tile has a path leading up
                     let action = findActions(neighbours[2][0], map, map[0].length - 1, map.length - 1, neighbours[2][1])
@@ -209,8 +218,6 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
     exploredNodes = {};
     let startNode = [startPos, [], ["start"], 0]; // Startpos, actions, directions, cost
     frontier.enqueue(startNode, 0);
-    console.log(frontier["items"])
-    console.log(frontier["items"].length)
     while (frontier["items"].length != 0) {
         let values = frontier.dequeue() // Removes and returns the item with lowest priority
         let currentState = values.element[0];
@@ -223,7 +230,7 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
                 foundgoal = true;
                 console.log(startPos, "to", goalPos ,actions, currentCost);
                 console.log("Directions: " + directions);
-                return actions, directions
+                return [actions, directions, currentCost]
             }
             else {
                 let successors = map[currentState];
@@ -238,42 +245,11 @@ function UniformCostSearch(startPos, map, goalPos) { // Finds the cheapest possi
         }
     }
     if (foundgoal == false) {
-        console.log("No paths possible.")          
+        console.log("No paths possible.") 
+        return "no paths"         
     }
 }
 
-function transformer(matrix) { // Turns a matrix of 1*1 tiles into a matrix with 3*3 tiles
-    let rows = matrix.length;
-    let cols = matrix[0].length;
-    let chunks = [];
-    let new_matrix = []
-    for (let r = 0; r < rows; r++) { // For each row
-        chunks = [ // Pushes 3 new rows at a time to new_matrix
-            [],
-            [],
-            []
-        ];
-        for (let c = 0; c < cols; c++) { // For each col
-            let activetile = [
-                [1, 1, 1],
-                [1, 1, 1],
-                [1, 1, 1]
-            ];
-            if (matrix[r][c] != "x") {
-                activetile = tiletypes[matrix[r][c]];
-            }
-            for (let tile_row = 0; tile_row < 3; tile_row++) { // For each row and col in a tile. Tiles are always sized 3*3
-                for (let tile_col = 0; tile_col < 3; tile_col++) {
-                    chunks[tile_row].push(activetile[tile_row][tile_col]);
-                }
-            }
-        }
-        for (let chunk of chunks) {
-            new_matrix.push(chunk); // Push all chunks to new_matrix
-        }
-    }
-    return(new_matrix);
-}
 
 function draw_tiles(x, y, tile_width, tile_height, tile) { // Takes a tile with a single value and turns it into a 3*3 tile that resembles the actual road
     let new_width = tile_width/3; // Divides the width and height by 3 to create a 3*3 tile, since that is how the more detailed tiles look
@@ -306,7 +282,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         if (current_pos[1] < size_y - 1) {
             console.log("down");
             current_pos[1] = current_pos[1] + 1;
-            relative_pos[1] = relative_pos[1] + 1;
         } 
         else {
             onborder = true;
@@ -337,7 +312,6 @@ function change_pos(direction, tiletype) { // Changes the current position in th
         if (current_pos[0] < size_x - 1) {
             console.log("right");
             current_pos[0] = current_pos[0] + 1; 
-            relative_pos[0] = relative_pos[0] + 1;
         }
         else {
             onborder = true;
@@ -360,18 +334,35 @@ function FindPath() {
     UniformCostSearch(current_position, detailed_maze, goal_position);
 }
 
+function MovePlanner() { // Makes a plan for how to explore the maze
+    let current_path = [];
+    let cheapest_path = [];
+    let goal_pos = "";
+    let current_position = "(" + String(current_pos[0]) + ", " + String(current_pos[1]) + ")";
+    let detailed_maze = CreateBoard(maze);
+    console.log(detailed_maze);
+    for (tiles in detailed_maze) {
+        if (detailed_maze[tiles]["actions"].length != 0) {
+            for (action of detailed_maze[tiles]["actions"]) {
+                if (action[1] == "unexplored") {
+                    // console.log(action[0] + " can be explored!");
+                    current_path = UniformCostSearch(current_position, detailed_maze, action[0])
+                    if (current_path != "no paths") {
+                        if (cheapest_path.length == 0 || current_path[2] < cheapest_path[2]) {
+                            cheapest_path = current_path;
+                            goal_pos = action[0];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    console.log("Next move: " + goal_pos + " Directions: " + cheapest_path[1])
+    //console.log(cheapest_path);
+}
 
 function startConnect() { // When the connect-button is pressed
-    // Fetch the hostname/IP address and port number from the form
-    clientID = document.getElementById("ID").value;
-    host = document.getElementById("host").value;
-    port = document.getElementById("port").value;
-
-    // Print output for the user in the messages div
-    document.getElementById("messages").innerHTML += '<span>Connecting to: ' + host + ' on port: ' + port + '</span><br/>';
-    document.getElementById("messages").innerHTML += '<span>Using the following client value: ' + clientID + '</span><br/>';
-  // Initialize new Paho client connection
-    client = new Paho.MQTT.Client(host, Number(port), clientID);
+    client = new Paho.MQTT.Client("maqiatto.com", 8883, "dinmammapåpizza");
     // Set callback handlers
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
@@ -382,32 +373,32 @@ function startConnect() { // When the connect-button is pressed
                    });
 }
 function onFail() {
-    document.getElementById("messages").innerHTML += '<span>ERROR: Connection to: ' + host + ' on port: ' + port + ' failed.</span><br/>'
+    document.getElementById("messages").innerHTML += '<span>ERROR: Connection failed.</span><br/>'
 }  
 
 let topic="kevin.klarin@abbindustrigymnasium.se/";
 
 function onConnect() { // Called when the client connects
     // Fetch the MQTT topic from the form
-    newtopic = topic + document.getElementById("topic").value;
-    console.log(newtopic);
+    subtopic = topic + document.getElementById("subtopic").value; 
+    pubtopic = topic + document.getElementById("pubtopic").value;
+    // console.log(newtopic);
     // Print output for the user in the messages div
-    document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + newtopic + '</span><br/>';
-    //document.getElementById("status").innerHTML = "connected";
+    document.getElementById("messages").innerHTML += '<span>Subscribing to: ' + subtopic + '</span><br/>';
 
     message = new Paho.MQTT.Message("Connected from webpage"); //Sends message to broker
-    message.destinationName = newtopic;
+    message.destinationName = pubtopic;
     client.send(message);
 
     // Subscribe to the requested topic
-    client.subscribe(newtopic);
+    client.subscribe(subtopic);
 }
 function onSend() {
     // Fetch the MQTT topic from the form
     // Print output for the user in the messages div'
     let message= document.getElementById("newMessage").value;
       message = new Paho.MQTT.Message(message);
-      message.destinationName = newtopic;
+      message.destinationName = pubtopic;
       client.send(message);
 }
 
