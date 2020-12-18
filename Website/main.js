@@ -278,7 +278,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
     console.log("ran change_pos(), got: " + direction + " tile: " + tiletype);
     let onborder = false;
     let activetile = tiletypes[tiletype];
-    if (direction == "down") {
+    if (direction == "3") {
         if (current_pos[1] < size_y - 1) {
             console.log("down");
             current_pos[1] = current_pos[1] + 1;
@@ -288,7 +288,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             console.log("can't go down");
         }
     }
-    else if (direction == "up") {
+    else if (direction == "1") {
         if (current_pos[1] > 0) {
             console.log("up");
             current_pos[1] = current_pos[1] - 1;
@@ -298,7 +298,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             console.log("can't go up");
         }
     }
-    else if (direction == "left") {
+    else if (direction == "4") {
         if (current_pos[0] > 0) {
             console.log("left");
             current_pos[0] = current_pos[0] - 1;
@@ -308,7 +308,7 @@ function change_pos(direction, tiletype) { // Changes the current position in th
             console.log("can't go left");
         }
     }
-    else if (direction == "right") {
+    else if (direction == "2") {
         if (current_pos[0] < size_x - 1) {
             console.log("right");
             current_pos[0] = current_pos[0] + 1; 

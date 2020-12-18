@@ -14,7 +14,7 @@ fm.register(board_info.PIN10, fm.fpioa.UART2_RX, force=True)
 uart_A = UART(UART.UART1, 115200, 8, None, 1, timeout = 1000, read_buf_len = 4096)
 uart_B = UART(UART.UART2, 115200, 8, None, 1, timeout = 1000, read_buf_len = 4096)
 
-THRESHOLD = (0, 65)
+THRESHOLD = (0, 115)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
@@ -33,7 +33,7 @@ offCenterCrossing = False
 faultcount = 0
 turn = False
 
-green_threshold   = (100, 0, -16, -128, 5, 15)
+green_threshold   = (66, 0, -11, -128, -21, 38)
 yellow_threshold   = (73, 0, -4, 2, 13, 50)
 
 while(True):
@@ -190,6 +190,8 @@ while(True):
 
     readstring = uart_B.read()
     print("message: " + str(readstring))
+
+    FindRoad()
 
     if yellowblobs:
         print("yellow")
